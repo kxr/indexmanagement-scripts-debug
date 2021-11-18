@@ -541,5 +541,6 @@ data:
     >> /tmp/imdebug.log  \ndone\n"
 kind: ConfigMap
 metadata:
-  name: indexmanagement-scripts
+  creationTimestamp: null
+  name: indexmanagement-scripts-debug-onerror
   namespace: openshift-logging
