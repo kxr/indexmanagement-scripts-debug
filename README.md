@@ -22,7 +22,7 @@ The operator deploys 3 cronJobs (running every 15 minutes) that uses these scrip
 
 ### Problem
 
-**On a prefectly healthy cluster** and under **ideal conditions**, these IM cronjobs would randomly fail once in a while. This is not serious as the succeeding cronjob runs would normally take care of anything missed by the previous failed job. However the randomly failing jobs generate alerts every now and then, which creates unnecessary alert fatigue. It is noted that in most of the cases, these randomly failing jobs would fail because of elasticsearch api call failing with the following error:
+Allegedly, **On a prefectly healthy cluster** and under **ideal conditions**, these IM cronjobs would randomly fail once in a while. This is not serious as the succeeding cronjob runs would normally take care of anything missed by the previous failed job. However the randomly failing jobs generate alerts every now and then, which creates unnecessary alert fatigue. It is noted that in most of the cases, these randomly failing jobs would fail because of elasticsearch api call failing with the following error:
 
     {"error":{"root_cause":[{"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"}],"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"},"status":500}
 
