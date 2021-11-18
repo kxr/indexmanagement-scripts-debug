@@ -1,0 +1,545 @@
+apiVersion: v1
+data:
+  checkRollover.py: |2
+
+    #!/bin/python
+
+    import json,sys
+
+    try:
+      fileToRead = sys.argv[1]
+      currentIndex = sys.argv[2]
+    except IndexError:
+      raise SystemExit(f"Usage: {sys.argv[0]} <file_to_read> <current_index>")
+
+    try:
+      with open(fileToRead) as f:
+        data = json.load(f)
+    except ValueError:
+      raise SystemExit(f"Invalid JSON: {f}")
+
+    try:
+      if not data['acknowledged']:
+        if not data['rolled_over']:
+          for condition in data['conditions']:
+            if data['conditions'][condition]:
+              print(f"Index was not rolled over despite meeting conditions to do so: {data['conditions']}")
+              sys.exit(1)
+
+          print(data['old_index'])
+          sys.exit(0)
+
+      if data['old_index'] != currentIndex:
+        print(f"old index {data['old_index']} does not match expected index {currentIndex}")
+        sys.exit(1)
+
+      print(data['new_index'])
+    except KeyError as e:
+      raise SystemExit(f"Unable to check rollover for {data}: missing key {e}")
+  delete: |2
+
+    set -uo pipefail
+
+    echo "$(date): [sh:delete] ENTRYPOINT" >> /tmp/imdebug.log
+
+    source /tmp/scripts/indexManagement
+
+    # need to get a list of all mappings under ${POLICY_MAPPING}, drop suffix '-write' iterate over
+    echo "$(date): [sh:delete] Calling writeAliases = getWriteAliases $POLICY_MAPPING" >> /tmp/imdebug.log
+    writeAliases="$(getWriteAliases "$POLICY_MAPPING")"
+    echo "$(date): [sh:delete] writeAliases: '${writeAliases}'" >> /tmp/imdebug.log
+
+    echo "$(date): [sh:delete] for aliasBase in \$writeAliases" >> /tmp/imdebug.log
+    for aliasBase in $writeAliases; do
+
+      echo "$(date): [sh:delete] aliasBase: ${aliasBase}" >> /tmp/imdebug.log
+      alias="$(echo $aliasBase | sed 's/-write$//g')"
+      echo "$(date): [sh:delete] alias: ${alias}" >> /tmp/imdebug.log
+
+      echo "$(date): [sh:delete] Calling 'delete \"${alias}\"'" >> /tmp/imdebug.log
+      if ! delete "$alias" ; then
+        echo "$(date): [sh:delete] 'delete \"${alias}\"' failed! exiting with rc 1" >> /tmp/imdebug.log
+        exit 1
+      fi
+
+      echo "$(date): [sh:delete] 'delete \"${alias}\"' succeeded" >> /tmp/imdebug.log
+    done
+  delete-then-rollover: |2
+
+    set -uo pipefail
+
+    echo "$(date): [sh:delete-then-rollover] ENTRYPOINT" >> /tmp/imdebug.log
+    echo "$(date): [sh:delete-then-rollover] POLICY_MAPPING=${POLICY_MAPPING}" >> /tmp/imdebug.log
+    echo "$(date): [sh:delete-then-rollover] MIN_AGE=${MIN_AGE}" >> /tmp/imdebug.log
+    echo "$(date): [sh:delete-then-rollover] PAYLOAD=${PAYLOAD}" >> /tmp/imdebug.log
+    echo "$(date): [sh:delete-then-rollover] ES_SERVICE=${ES_SERVICE}" >> /tmp/imdebug.log
+
+    echo "$(date): [sh:delete-then-rollover] Calling /tmp/scripts/delete" >> /tmp/imdebug.log
+    /tmp/scripts/delete
+    delete_rc=$?
+    echo "$(date): [sh:delete-then-rollover] ReturnCode of /tmp/scripts/delete is ${delete_rc}" >> /tmp/imdebug.log
+
+    echo "$(date): [sh:delete-then-rollover] Calling /tmp/scripts/rollover" >> /tmp/imdebug.log
+    /tmp/scripts/rollover
+    rollover_rc=$?
+    echo "$(date): [sh:delete-then-rollover] ReturnCode of /tmp/scripts/rollover is ${rollover_rc}" >> /tmp/imdebug.log
+
+    if [ $delete_rc -ne 0 ] || [ $rollover_rc -ne 0 ]; then
+
+        echo "#### cat /tmp/imdebug.log"
+        cat /tmp/imdebug.log
+        echo "#### eof /tmp/imdebug.log"
+
+        exit 1
+    fi
+
+    exit 0
+  getNext25Indices.py: |2
+
+    #!/bin/python
+
+    from __future__ import print_function
+    import json,sys
+
+    try:
+      minAgeFromEpoc = sys.argv[1]
+      writeIndex = sys.argv[2]
+      output = sys.argv[3]
+    except IndexError:
+      raise SystemExit(f"Usage: {sys.argv[0]} <minAgeFromEpoc> <writeIndex> <json_response>")
+
+    try:
+      response = json.loads(output)
+    except ValueError:
+      raise SystemExit(f"Invalid JSON: {output}")
+
+    lastIndex = len(response) - 1
+
+    if 'error' in response[lastIndex]:
+      print(f"Error while attemping to determine index creation dates: {response[lastIndex]}")
+      sys.exit(1)
+
+    r = response[lastIndex]
+
+    indices = []
+    for index in r:
+      try:
+        if 'settings' in r[index]:
+          settings = r[index]['settings']
+          if 'index' in settings:
+            meta = settings['index']
+            if 'creation_date' in meta:
+              creation_date = meta['creation_date']
+              if int(creation_date) < int(minAgeFromEpoc):
+                indices.append(index)
+            else:
+              sys.stderr.write("'creation_date' missing from index settings: %r" % (meta))
+          else:
+            sys.stderr.write("'index' missing from setting: %r" % (settings))
+        else:
+          sys.stderr.write("'settings' missing for %r" % (index))
+      except:
+        e = sys.exc_info()[0]
+        sys.stderr.write("Error trying to evaluate index from '%r': %r" % (r,e))
+    if writeIndex in indices:
+      indices.remove(writeIndex)
+    for i in range(0, len(indices), 25):
+      print(','.join(indices[i:i+25]))
+  getWriteIndex.py: |2
+
+    #!/bin/python
+
+    import json,sys
+
+    try:
+      alias = sys.argv[1]
+      output = sys.argv[2]
+    except IndexError:
+      raise SystemExit(f"Usage: {sys.argv[0]} <write_alias> <json_response>")
+
+    try:
+      response = json.loads(output)
+    except ValueError:
+      raise SystemExit(f"Invalid JSON: {output}")
+
+    lastIndex = len(response) - 1
+
+    if 'error' in response[lastIndex]:
+      print(f"Error while attemping to determine the active write alias: {response[lastIndex]}")
+      sys.exit(1)
+
+    data = response[lastIndex]
+
+    try:
+      writeIndex = [index for index in data if data[index]['aliases'][alias].get('is_write_index')]
+      if len(writeIndex) > 0:
+        writeIndex.sort(reverse=True)
+        print(" ".join(writeIndex))
+    except:
+      e = sys.exc_info()[0]
+      raise SystemExit(f"Error trying to determine the 'write' index from {data}: {e}")
+  indexManagement: "\nCONNECT_TIMEOUT=${CONNECT_TIMEOUT:-30}\n\nfunction getWriteIndex()
+    {\n\n  echo \"$(date): [sh:indexManagement:getWriteIndex] ENTRYPOINT\" >> /tmp/imdebug.log\n\n
+    \ local policy=\"$1\"\n  echo \"$(date): [sh:indexManagement:getWriteIndex] policy=\\$1:
+    ${policy}\" >> /tmp/imdebug.log\n\n  # find out the current write index for ${POLICY_MAPPING}-write
+    and check if there is the next generation of it\n  echo \"$(date): [sh:indexManagement:getWriteIndex]
+    Calling 'getAlias \\\"${policy}\\\"'\" >> /tmp/imdebug.log\n  aliasResponse=\"$(getAlias
+    \"${policy}\")\"\n  echo \"$(date): [sh:indexManagement:getWriteIndex] aliasResponse:
+    ${aliasResponse}\" >> /tmp/imdebug.log\n\n  if [ -z \"$aliasResponse\" ]; then\n
+    \   echo \"Received an empty response from elasticsearch -- server may not be
+    ready\"\n    return 1\n  fi\n\n  jsonResponse=\"$(echo [$aliasResponse] | sed
+    's/}{/},{/g')\"\n  echo \"$(date): [sh:indexManagement:getWriteIndex] jsonResponse:
+    ${jsonResponse}\" >> /tmp/imdebug.log\n\n  echo \"$(date): [sh:indexManagement:getWriteIndex]
+    Calling python /tmp/scripts/getWriteIndex.py \\\"${policy}\\\"\" >> /tmp/imdebug.log\n
+    \ if ! writeIndices=\"$(python /tmp/scripts/getWriteIndex.py \"${policy}\" \"$jsonResponse\")\"
+    ; then\n    echo \"$(date): [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py
+    \\\"${policy}\\\" failed! writeIndices: '${writeIndices}' Returning rc 1\" >>
+    /tmp/imdebug.log\n    echo $writeIndices\n    return 1\n  fi\n\n  echo \"$(date):
+    [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py \\\"${policy}\\\"
+    succeeded. writeIndices: '${writeIndices}'\" >> /tmp/imdebug.log\n\n  echo \"$(date):
+    [sh:indexManagement:getWriteIndex] Calling ensureOneWriteIndex \\\"${policy}\\\"
+    \\\"${writeIndices}\\\" -> writeIndex\" >> /tmp/imdebug.log\n  writeIndex=\"$(ensureOneWriteIndex
+    \"$policy\" \"$writeIndices\")\"\n  echo \"$(date): [sh:indexManagement:getWriteIndex]
+    writeIndex: ${writeIndex}\" >> /tmp/imdebug.log\n\n  echo \"$(date): [sh:indexManagement:getWriteIndex]
+    Echoing writeIndex (${writeIndex})\" >> /tmp/imdebug.log\n  echo $writeIndex\n}\n\nfunction
+    ensureOneWriteIndex() {\n  echo \"$(date): [sh:indexManagement:ensureOneWriteIndex]
+    ENTRYPOINT\" >> /tmp/imdebug.log\n\n  local policy=\"$1\"\n  echo \"$(date): [sh:indexManagement:ensureOneWriteIndex]
+    policy=\\$1: ${policy}\" >> /tmp/imdebug.log\n  local writeIndices=\"$2\"\n  echo
+    \"$(date): [sh:indexManagement:ensureOneWriteIndex] writeIndices=\\$2: ${writeIndices}\"
+    >> /tmp/imdebug.log\n\n  # first index received is the latest one\n  writeIndex=\"\"\n
+    \ echo \"$(date): [sh:indexManagement:ensureOneWriteIndex] for index in writeIndices\"
+    >> /tmp/imdebug.log\n  for index in $writeIndices; do\n    echo \"$(date): [sh:indexManagement:ensureOneWriteIndex]
+    index: '${index}', writeIndex: '${writeIndex}'\" >> /tmp/imdebug.log\n    if [
+    -z \"$writeIndex\" ]; then\n      writeIndex=\"$index\"\n    else\n      # extra
+    write index -- mark it as not a write index\n      echo \"$(date): [sh:indexManagement:ensureOneWriteIndex]
+    Calling removeAsWriteIndexForAlias \\\"${index}\\\" \\\"${policy}\\\"\" >> /tmp/imdebug.log\n
+    \     removeAsWriteIndexForAlias \"$index\" \"$policy\"\n    fi\n  done\n\n  echo
+    \"$(date): [sh:indexManagement:ensureOneWriteIndex] Echoing writeIndex (${writeIndex})\"
+    >> /tmp/imdebug.log\n  echo $writeIndex\n}\n\nfunction getWriteAliases() {\n  echo
+    \"$(date): [sh:indexManagement:getWriteAliases] ENTRYPOINT\" >> /tmp/imdebug.log\n\n
+    \ local policy=\"$1\"\n  echo \"$(date): [sh:indexManagement:getWriteAliases]
+    policy=\\$1: ${policy}\" >> /tmp/imdebug.log\n\n  # \"_cat/aliases/${policy}*-write?h=alias\"
+    | uniq\n  echo \"$(date): [sh:indexManagement:getWriteAliases] Calling catWriteAliases
+    \\\"${policy}\\\" -> aliasResponse\" >> /tmp/imdebug.log\n  aliasResponse=\"$(catWriteAliases
+    \"$policy\")\"\n  echo \"$(date): [sh:indexManagement:getWriteAliases] aliasResponse:
+    '${aliasResponse}'\" >> /tmp/imdebug.log\n\n  if [ -z \"$aliasResponse\" ]; then\n
+    \   echo \"$(date): [sh:indexManagement:getWriteAliases] aliasResponse emtpy,
+    Returning 1\" >> /tmp/imdebug.log\n    echo \"Received an empty response from
+    elasticsearch -- server may not be ready\"\n    return 1\n  fi\n\n  echo \"$(date):
+    [sh:indexManagement:getWriteAliases] Echoing aliasResponse (${aliasResponse})\"
+    >> /tmp/imdebug.log\n  echo $aliasResponse\n}\n\nfunction rollover() {\n  echo
+    \"$(date): [sh:indexManagement:rollover] ENTRYPOINT\" >> /tmp/imdebug.log\n\n
+    \ local policy=\"$1\"\n  echo \"$(date): [sh:indexManagement:rollover] policy=\\$1:
+    ${policy}\" >> /tmp/imdebug.log\n  local decoded=\"$2\"\n  echo \"$(date): [sh:indexManagement:rollover]
+    decoded=\\$2: ${decoded}\" >> /tmp/imdebug.log\n\n  echo \"========================\"\n
+    \ echo \"Index management rollover process starting for $policy\"\n  echo \"\"\n\n
+    \ # get current write index\n  echo \"$(date): [sh:indexManagement:rollover] Calling
+    getWriteIndex \\\"${policy}-write\\\" -> writeIndex\" >> /tmp/imdebug.log\n  if
+    ! writeIndex=\"$(getWriteIndex \"${policy}-write\")\" ; then\n    echo \"$(date):
+    [sh:indexManagement:rollover] getWriteIndex \\\"${policy}-write\\\" failed! Echoing
+    writeIndex: '${writeIndex}', Returning 1\" >> /tmp/imdebug.log\n    echo $writeIndex\n
+    \   return 1\n  fi\n  echo \"$(date): [sh:indexManagement:rollover] getWriteIndex
+    \\\"${policy}-write\\\" succeeded. writeIndex: '${writeIndex}'\" >> /tmp/imdebug.log\n\n
+    \ echo \"Current write index for ${policy}-write: $writeIndex\"\n\n  # try to
+    rollover\n  echo \"$(date): [sh:indexManagement:rollover] Calling rolloverForPolicy
+    \\\"${policy}-write\\\" \\\"$decoded\\\" -> responseRollover\" >> /tmp/imdebug.log\n
+    \ responseRollover=\"$(rolloverForPolicy \"${policy}-write\" \"$decoded\")\"\n
+    \ echo \"$(date): [sh:indexManagement:rollover] responseRollover: '${responseRollover}'\"
+    >> /tmp/imdebug.log\n\n  echo \"Checking results from _rollover call\"\n\n  if
+    [ \"$responseRollover\" == False ] ; then\n    # already in bad state\n    echo
+    \"Calculating next write index based on current write index...\"\n\n    indexGeneration=\"$(echo
+    $writeIndex | cut -d'-' -f2)\"\n    writeBase=\"$(echo $writeIndex | cut -d'-'
+    -f1)\"\n\n    # if we don't strip off the leading 0s it does math wrong...\n    generation=\"$(echo
+    $indexGeneration | sed 's/^0*//')\"\n    # pad the index name again with 0s\n
+    \   nextGeneration=\"$(printf '%06g' $(($generation + 1)))\"\n    nextIndex=\"$writeBase-$nextGeneration\"\n
+    \   \n    echo \"$(date): [sh:indexManagement:rollover] responseRollover=False,
+    Calculating next write index based on current write index\" >> /tmp/imdebug.log\n
+    \   echo \"$(date): [sh:indexManagement:rollover] indexGeneration: '${indexGeneration}'\"
+    >> /tmp/imdebug.log\n    echo \"$(date): [sh:indexManagement:rollover] writeBase:
+    '${writeBase}'\" >> /tmp/imdebug.log\n    echo \"$(date): [sh:indexManagement:rollover]
+    generation: '${generation}'\" >> /tmp/imdebug.log\n    echo \"$(date): [sh:indexManagement:rollover]
+    nextGeneration: '${nextGeneration}'\" >> /tmp/imdebug.log\n    echo \"$(date):
+    [sh:indexManagement:rollover] nextIndex: '${nextIndex}'\" >> /tmp/imdebug.log\n\n
+    \ else\n    # check response to see if it did roll over (field in response)\n
+    \   echo \"$(date): [sh:indexManagement:rollover] responseRollover!=False, check
+    response to see if it did roll over (field in response)\" >> /tmp/imdebug.log\n\n
+    \   echo \"$(date): [sh:indexManagement:rollover] Calling python /tmp/scripts/checkRollover.py
+    \\\"/tmp/response.txt\\\" \\\"${writeIndex}\\\" -> nextIndex\" >> /tmp/imdebug.log\n
+    \   echo \"$(date): [sh:indexManagement:rollover] Cating /tmp/response.txt:\"
+    >> /tmp/imdebug.log\n    cat /tmp/response.txt &>> /tmp/imdebug.log || true\n
+    \   if ! nextIndex=\"$(python /tmp/scripts/checkRollover.py \"/tmp/response.txt\"
+    \"$writeIndex\")\" ; then\n\n      echo \"$(date): [sh:indexManagement:rollover]
+    python /tmp/scripts/checkRollover.py \\\"/tmp/response.txt\\\" \\\"${writeIndex}\\\"
+    failed! Echoing nextIndex: '${nextIndex}', Returning 1\" >> /tmp/imdebug.log\n
+    \     echo $nextIndex\n      return 1\n    fi\n    echo \"$(date): [sh:indexManagement:rollover]
+    python /tmp/scripts/checkRollover.py \\\"/tmp/response.txt\\\" \\\"${writeIndex}\\\"
+    succeeded. nextIndex: '${nextIndex}'\" >> /tmp/imdebug.log\n  fi\n  \n\n  echo
+    \"Next write index for ${policy}-write: $nextIndex\"\n  echo \"$(date): [sh:indexManagement:rollover]
+    Next write index for ${policy}-write: ${nextIndex}\" >> /tmp/imdebug.log\n\n  echo
+    \"Checking if $nextIndex exists\"\n\n  # if true, ensure next index was created
+    and\n  # cluster permits operations on it, e.g. not in read-only\n  # state because
+    of low disk space.\n  echo \"$(date): [sh:indexManagement:rollover] Calling checkIndexExists
+    \\\"${nextIndex}\\\" -> indexExists\" >> /tmp/imdebug.log\n  indexExists=\"$(checkIndexExists
+    \"$nextIndex\")\"\n  echo \"$(date): [sh:indexManagement:rollover] indexExists:
+    '${indexExists}'\" >> /tmp/imdebug.log\n  if [ \"$indexExists\" == False ] ; then\n
+    \   cat /tmp/response.txt\n    return 1\n  fi\n\n  echo \"Checking if $nextIndex
+    is the write index for ${policy}-write\"\n\n  ## if true, ensure write-alias points
+    to next index\n  echo \"$(date): [sh:indexManagement:rollover] Calling getWriteIndex
+    \\\"${policy}-write\\\" -> writeIndex\" >> /tmp/imdebug.log\n  if ! writeIndex=\"$(getWriteIndex
+    \"${policy}-write\")\" ; then\n    echo \"$(date): [sh:indexManagement:rollover]
+    getWriteIndex \\\"${policy}-write\\\" failed! writeIndex: '${writeIndex}', Returning
+    1\" >> /tmp/imdebug.log\n    echo $writeIndex\n    return 1\n  fi\n  echo \"$(date):
+    [sh:indexManagement:rollover] getWriteIndex \\\"${policy}-write\\\" succeeded.
+    writeIndex: '${writeIndex}'\" >> /tmp/imdebug.log\n\n\n  echo \"$(date): [sh:indexManagement:rollover]
+    Comparing nextIndex: '${nextIndex}' and writeIndex: '${writeIndex}'\" >> /tmp/imdebug.log\n
+    \ if [ \"$nextIndex\" == \"$writeIndex\" ] ; then\n    echo \"$(date): [sh:indexManagement:rollover]
+    nextIndex == writeIndex. Done. Returning 0\" >> /tmp/imdebug.log\n    echo \"Done!\"\n
+    \   return 0\n  fi\n\n  echo \"Updating alias for ${policy}-write\"\n  echo \"$(date):
+    [sh:indexManagement:rollover] nextIndex != writeIndex. Updating alias for ${policy}-write\"
+    >> /tmp/imdebug.log\n\n  # else - try to update alias to be correct\n  echo \"$(date):
+    [sh:indexManagement:rollover] Calling updateWriteIndex \\\"$writeIndex\\\" \\\"$nextIndex\\\"
+    \\\"${policy}-write\\\" -> responseUpdateWriteIndex\" >> /tmp/imdebug.log\n  responseUpdateWriteIndex=\"$(updateWriteIndex
+    \"$writeIndex\" \"$nextIndex\" \"${policy}-write\")\"\n  echo \"$(date): [sh:indexManagement:rollover]
+    responseUpdateWriteIndex: '${responseUpdateWriteIndex}'\" >> /tmp/imdebug.log\n\n
+    \ if [ \"$responseUpdateWriteIndex\" == True ] ; then\n    echo \"$(date): [sh:indexManagement:rollover]
+    responseUpdateWriteIndex == True. Done. Returning 0\" >> /tmp/imdebug.log\n    echo
+    \"Done!\"\n    return 0\n  fi\n  \n  echo \"$(date): [sh:indexManagement:rollover]
+    responseUpdateWriteIndex != True. Cating /tmp/response.txt and Returning 1\" >>
+    /tmp/imdebug.log\n  echo \"$(date): [sh:indexManagement:rollover] Cating /tmp/response.txt:\"
+    >> /tmp/imdebug.log\n  cat /tmp/response.txt &>> /tmp/imdebug.log || true\n  cat
+    /tmp/response.txt\n  return 1\n}\n\nfunction delete() {\n  echo \"$(date): [sh:indexManagement:delete]
+    ENTRYPOINT\" >> /tmp/imdebug.log\n\n  local policy=\"$1\"\n  echo \"$(date): [sh:indexManagement:delete]
+    policy=\\$1: ${policy}\" >> /tmp/imdebug.log\n\n  ERRORS=\"$(mktemp /tmp/delete-XXXXXX)\"\n\n
+    \ echo \"========================\"\n  echo \"Index management delete process
+    starting for $policy\"\n  echo \"\"\n\n  echo \"$(date): [sh:indexManagement:delete]
+    Calling getWriteIndex \\\"${policy}-write\\\" -> writeIndex\" >> /tmp/imdebug.log\n
+    \ if ! writeIndex=\"$(getWriteIndex \"${policy}-write\")\" ; then\n    echo \"$(date):
+    [sh:indexManagement:delete] getWriteIndex \\\"${policy}-write\\\" failed! Echoing
+    writeIndex: '${writeIndex}', Returning 1\" >> /tmp/imdebug.log\n    echo $writeIndex\n
+    \   return 1\n  fi\n  echo \"$(date): [sh:indexManagement:delete] getWriteIndex
+    \\\"${policy}-write\\\" succeeded. writeIndex: '${writeIndex}'\" >> /tmp/imdebug.log\n\n
+    \ echo \"$(date): [sh:indexManagement:delete] Calling getIndicesAgeForAlias \\\"${policy}-write\\\"
+    -> indices\" >> /tmp/imdebug.log\n  indices=\"$(getIndicesAgeForAlias \"${policy}-write\")\"\n
+    \ echo \"$(date): [sh:indexManagement:delete] indices: '${indices}'\" >> /tmp/imdebug.log\n\n
+    \ if [ -z \"$indices\" ]; then\n    echo \"$(date): [sh:indexManagement:delete]
+    indices empty, Returning 1\" >> /tmp/imdebug.log\n    echo \"Received an empty
+    response from elasticsearch -- server may not be ready\"\n    return 1\n  fi\n\n
+    \ jsonResponse=\"$(echo [$indices] | sed 's/}{/},{/g')\"\n  echo \"$(date): [sh:indexManagement:delete]
+    jsonResponse: '${jsonResponse}'\" >> /tmp/imdebug.log\n\n  # Delete in batches
+    of 25 for cases where there are a large number of indices to remove\n  nowInMillis=$(date
+    +%s%3N)\n  minAgeFromEpoc=$(($nowInMillis - $MIN_AGE))\n  echo \"$(date): [sh:indexManagement:delete]
+    nowInMillis: '${nowInMillis}'\" >> /tmp/imdebug.log\n  echo \"$(date): [sh:indexManagement:delete]
+    minAgeFromEpoc: '${minAgeFromEpoc}'\" >> /tmp/imdebug.log\n\n  echo \"$(date):
+    [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py \\\"${minAgeFromEpoc}\\\"
+    \\\"${writeIndex}\\\" \\\"${jsonResponse}\\\" 2>> ${ERRORS} -> indices\" >> /tmp/imdebug.log\n
+    \ if ! indices=$(python /tmp/scripts/getNext25Indices.py \"$minAgeFromEpoc\" \"$writeIndex\"
+    \"$jsonResponse\" 2>>$ERRORS) ; then\n    echo \"$(date): [sh:indexManagement:delete]
+    Calling python /tmp/scripts/getNext25Indices.py \\\"${minAgeFromEpoc}\\\" \\\"${writeIndex}\\\"
+    \\\"${jsonResponse}\\\" failed! indices: '${indices}', Returning 1\" >> /tmp/imdebug.log\n
+    \   echo \"$(date): [sh:indexManagement:delete] Cating ${ERRORS}:\" >> /tmp/imdebug.log\n
+    \   cat \"${ERRORS}\" &>> /tmp/imdebug.log || true\n    cat $ERRORS\n    rm $ERRORS\n
+    \   return 1\n  fi\n  echo \"$(date): [sh:indexManagement:delete] Calling python
+    /tmp/scripts/getNext25Indices.py \\\"${minAgeFromEpoc}\\\" \\\"${writeIndex}\\\"
+    \\\"${jsonResponse}\\\" succeeded. indices: '${indices}'\" >> /tmp/imdebug.log\n
+    \ echo \"$(date): [sh:indexManagement:delete] Cating ${ERRORS}:\" >> /tmp/imdebug.log\n
+    \ cat \"${ERRORS}\" &>> /tmp/imdebug.log || true\n  # Dump any findings to stdout
+    but don't error\n  if [ -s $ERRORS ]; then\n    cat $ERRORS\n    rm $ERRORS\n
+    \ fi\n\n  if [ \"${indices}\" == \"\" ] ; then\n      echo \"$(date): [sh:indexManagement:delete]
+    indices == '', No indices to delete, Returning 0\" >> /tmp/imdebug.log\n      echo
+    No indices to delete\n      return 0\n  else\n      echo deleting indices: \"${indices}\"\n
+    \     echo \"$(date): [sh:indexManagement:delete] deleting indices: '${indices}'\"
+    >> /tmp/imdebug.log\n  fi\n\n  echo \"$(date): [sh:indexManagement:delete] for
+    sets in indices\" >> /tmp/imdebug.log\n  for sets in ${indices}; do\n    echo
+    \"$(date): [sh:indexManagement:delete] sets: '${sets}'\" >> /tmp/imdebug.log\n
+    \   \n    echo \"$(date): [sh:indexManagement:delete] Calling deleteIndices \\\"${sets}\\\"
+    -> response\" >> /tmp/imdebug.log\n    response=\"$(deleteIndices \"${sets}\")\"\n
+    \   echo \"$(date): [sh:indexManagement:delete] response: '${response}'\" >> /tmp/imdebug.log\n\n
+    \   if [ \"$response\" == False ] ; then\n      echo \"$(date): [sh:indexManagement:delete]
+    response == False, Returning 1\" >> /tmp/imdebug.log\n      cat /tmp/response.txt\n
+    \     return 1\n    fi\n    echo \"$(date): [sh:indexManagement:delete] response
+    != False\" >> /tmp/imdebug.log\n  done\n\n  echo \"$(date): [sh:indexManagement:delete]
+    Done\" >> /tmp/imdebug.log\n  echo \"Done!\"\n}\n\nfunction getAlias() {\n  local
+    alias=\"$1\"\n\n  python -c 'import indexManagementClient; print(indexManagementClient.getAlias(\"'$alias'\"))'\n}\n\nfunction
+    getIndicesAgeForAlias() {\n  local alias=\"$1\"\n\n  python -c 'import indexManagementClient;
+    print(indexManagementClient.getIndicesAgeForAlias(\"'$alias'\"))'\n}\n\nfunction
+    deleteIndices() {\n  local index=\"$1\"\n\n  python -c 'import indexManagementClient;
+    print(indexManagementClient.deleteIndices(\"'$index'\"))'\n}\n\nfunction removeAsWriteIndexForAlias()
+    {\n  local index=\"$1\"\n  local alias=\"$2\"\n\n  python -c 'import indexManagementClient;
+    print(indexManagementClient.removeAsWriteIndexForAlias(\"'$index'\",\"'$alias'\"))'
+    > /tmp/response.txt\n}\n\nfunction catWriteAliases() {\n  local policy=\"$1\"\n\n
+    \ python -c 'import indexManagementClient; print(indexManagementClient.catWriteAliases(\"'$policy'\"))'\n}\n\nfunction
+    rolloverForPolicy() {\n  local policy=\"$1\"\n  local decoded=\"$2\"\n\n  python
+    -c 'import indexManagementClient; print(indexManagementClient.rolloverForPolicy(\"'$policy'\",'$decoded'))'\n}\n\nfunction
+    checkIndexExists() {\n  local index=\"$1\"\n\n  python -c 'import indexManagementClient;
+    print(indexManagementClient.checkIndexExists(\"'$index'\"))'\n}\n\nfunction updateWriteIndex()
+    {\n  currentIndex=\"$1\"\n  nextIndex=\"$2\"\n  alias=\"$3\"\n\n  python -c 'import
+    indexManagementClient; print(indexManagementClient.updateWriteIndex(\"'$currentIndex'\",\"'$nextIndex'\",\"'$alias'\"))'\n}\n"
+  indexManagementClient.py: |2
+
+    #!/bin/python
+
+    import os, sys
+    import json
+    import logging as log
+    from elasticsearch import Elasticsearch
+    from ssl import create_default_context
+
+    log.basicConfig(
+      filename='/tmp/imdebug.log',
+      format='%(asctime)s: [%(funcName)s] %(message)s',
+      level=log.DEBUG
+    )
+
+    def getEsClient():
+      log.debug("FUNC_INIT: {}".format(locals()))
+      esService = os.environ['ES_SERVICE']
+      connectTimeout = os.getenv('CONNECT_TIMEOUT', 30)
+
+      tokenFile = open('/var/run/secrets/kubernetes.io/serviceaccount/token', 'r')
+      bearer_token = tokenFile.read()
+
+      context = create_default_context(cafile='/etc/indexmanagement/keys/admin-ca')
+      es_client = Elasticsearch([esService],
+        timeout=connectTimeout,
+        max_retries=5,
+        retry_on_timeout=True,
+        headers={"authorization": f"Bearer {bearer_token}"},
+        ssl_context=context)
+      return es_client
+
+    def getAlias(alias):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      try:
+        es_client = getEsClient()
+        ret = json.dumps(es_client.indices.get_alias(name=alias))
+        log.debug("RETURN: {}".format(ret))
+        return ret
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        return ""
+
+    def getIndicesAgeForAlias(alias):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      try:
+        es_client = getEsClient()
+        ret = json.dumps(es_client.indices.get_settings(index=alias, name="index.creation_date"))
+        log.debug("RETURN: {}".format(ret))
+        return ret
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        return ""
+
+    def deleteIndices(index):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      original_stdout = sys.stdout
+      try:
+        es_client = getEsClient()
+        response = es_client.indices.delete(index=index)
+        log.debug("RETURNING TRUE: response={}".format(response))
+        return True
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        sys.stdout = open('/tmp/response.txt', 'w')
+        print(e)
+        sys.stdout = original_stdout
+        return False
+
+    def removeAsWriteIndexForAlias(index, alias):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      es_client = getEsClient()
+      response = es_client.indices.update_aliases({
+        "actions": [
+            {"add":{"index": f"{index}", "alias": f"{alias}", "is_write_index": False}}
+        ]
+      })
+      log.debug("response={}".format(response))
+      log.debug("RETURN: {}".format(response['acknowledged']))
+      return response['acknowledged']
+
+    def catWriteAliases(policy):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      try:
+        es_client = getEsClient()
+        alias_name = f"{policy}*-write"
+        response = es_client.cat.aliases(name=alias_name, h="alias")
+        log.debug("response={}".format(response))
+        response_list = list(response.split("\n"))
+        log.debug("response_list={}".format(response_list))
+        ret = " ".join(sorted(set(response_list)))
+        log.debug("RETURN: {}".format(ret))
+        return ret
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        return ""
+
+    def rolloverForPolicy(alias, decoded):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      original_stdout = sys.stdout
+      try:
+        es_client = getEsClient()
+        response = es_client.indices.rollover(alias=alias, body=decoded)
+        log.debug("response={}".format(response))
+        sys.stdout = open('/tmp/response.txt', 'w')
+        print(json.dumps(response))
+        sys.stdout = original_stdout
+        log.debug("RETURNING TRUE")
+        return True
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        return False
+
+    def checkIndexExists(index):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      original_stdout = sys.stdout
+      try:
+        es_client = getEsClient()
+        ret = es_client.indices.exists(index=index)
+        log.debug("RETURN: {}".format(ret))
+        return ret
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        sys.stdout = open('/tmp/response.txt', 'w')
+        print(e)
+        sys.stdout = original_stdout
+        return False
+
+    def updateWriteIndex(currentIndex, nextIndex, alias):
+      log.debug("FUNC_INIT: {}".format(locals()))
+      original_stdout = sys.stdout
+      try:
+        es_client = getEsClient()
+        response = es_client.indices.update_aliases({
+          "actions": [
+              {"add":{"index": f"{currentIndex}", "alias": f"{alias}", "is_write_index": False}},
+              {"add":{"index": f"{nextIndex}", "alias": f"{alias}", "is_write_index": True}}
+          ]
+        })
+        log.debug("response={}".format(response))
+        log.debug("RETURN: {}".format(response['acknowledged']))
+        return response['acknowledged']
+      except Exception as e:
+        log.debug("EXCEPTION: {}".format(e))
+        sys.stdout = open('/tmp/response.txt', 'w')
+        print(e)
+        sys.stdout = original_stdout
+        return False
+  rollover: "\nset -euo pipefail\n\necho \"$(date): [sh:rollover] ENTRYPOINT\" >>
+    /tmp/imdebug.log\n\nsource /tmp/scripts/indexManagement\n\ndecoded=$(echo $PAYLOAD
+    | base64 -d)\n\necho \"$(date): [sh:rollover] decoded: ${decoded}\" >> /tmp/imdebug.log\n\n#
+    need to get a list of all mappings under ${POLICY_MAPPING}, drop suffix '-write'
+    iterate over\necho \"$(date): [sh:rollover] Calling 'getWriteAliases \\\"$POLICY_MAPPING\\\"'\"
+    >> /tmp/imdebug.log\nwriteAliases=\"$(getWriteAliases \"$POLICY_MAPPING\")\"\necho
+    \"$(date): [sh:rollover] writeAliases: ${writeAliases}\" >> /tmp/imdebug.log\n\necho
+    \"$(date): [sh:rollover] for aliasBase in \\$writeAliases\" >> /tmp/imdebug.log\nfor
+    aliasBase in $writeAliases; do\n\n  echo \"$(date): [sh:rollover] aliasBase: ${aliasBase}\"
+    >> /tmp/imdebug.log\n  alias=\"$(echo $aliasBase | sed 's/-write$//g')\"\n  echo
+    \"$(date): [sh:rollover] alias: ${alias}\" >> /tmp/imdebug.log\n\n  echo \"$(date):
+    [sh:rollover] Calling 'rollover \\\"${alias}\\\"'\" >> /tmp/imdebug.log\n  if
+    ! rollover \"$alias\" \"$decoded\" ; then\n    echo \"$(date): [sh:rollover] 'rollover
+    \\\"${alias}\\\"' failed! exiting with rc 1\" >> /tmp/imdebug.log\n    exit 1\n
+    \ fi\n\n  echo \"$(date): [sh:rollover] 'rollover \\\"${alias}\\\"' succeeded\"
+    >> /tmp/imdebug.log  \ndone\n"
+kind: ConfigMap
+metadata:
+  name: indexmanagement-scripts
+  namespace: openshift-logging

@@ -1,0 +1,27 @@
+
+set -uo pipefail
+
+echo "$(date): [sh:delete] ENTRYPOINT" >> /tmp/imdebug.log
+
+source /tmp/scripts/indexManagement
+
+# need to get a list of all mappings under ${POLICY_MAPPING}, drop suffix '-write' iterate over
+echo "$(date): [sh:delete] Calling writeAliases = getWriteAliases $POLICY_MAPPING" >> /tmp/imdebug.log
+writeAliases="$(getWriteAliases "$POLICY_MAPPING")"
+echo "$(date): [sh:delete] writeAliases: '${writeAliases}'" >> /tmp/imdebug.log
+
+echo "$(date): [sh:delete] for aliasBase in \$writeAliases" >> /tmp/imdebug.log
+for aliasBase in $writeAliases; do
+
+  echo "$(date): [sh:delete] aliasBase: ${aliasBase}" >> /tmp/imdebug.log
+  alias="$(echo $aliasBase | sed 's/-write$//g')"
+  echo "$(date): [sh:delete] alias: ${alias}" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:delete] Calling 'delete \"${alias}\"'" >> /tmp/imdebug.log
+  if ! delete "$alias" ; then
+    echo "$(date): [sh:delete] 'delete \"${alias}\"' failed! exiting with rc 1" >> /tmp/imdebug.log
+    exit 1
+  fi
+
+  echo "$(date): [sh:delete] 'delete \"${alias}\"' succeeded" >> /tmp/imdebug.log
+done

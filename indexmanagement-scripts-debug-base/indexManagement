@@ -1,0 +1,347 @@
+
+CONNECT_TIMEOUT=${CONNECT_TIMEOUT:-30}
+
+function getWriteIndex() {
+
+  echo "$(date): [sh:indexManagement:getWriteIndex] ENTRYPOINT" >> /tmp/imdebug.log
+
+  local policy="$1"
+  echo "$(date): [sh:indexManagement:getWriteIndex] policy=\$1: ${policy}" >> /tmp/imdebug.log
+
+  # find out the current write index for ${POLICY_MAPPING}-write and check if there is the next generation of it
+  echo "$(date): [sh:indexManagement:getWriteIndex] Calling 'getAlias \"${policy}\"'" >> /tmp/imdebug.log
+  aliasResponse="$(getAlias "${policy}")"
+  echo "$(date): [sh:indexManagement:getWriteIndex] aliasResponse: ${aliasResponse}" >> /tmp/imdebug.log
+
+  if [ -z "$aliasResponse" ]; then
+    echo "Received an empty response from elasticsearch -- server may not be ready"
+    return 1
+  fi
+
+  jsonResponse="$(echo [$aliasResponse] | sed 's/}{/},{/g')"
+  echo "$(date): [sh:indexManagement:getWriteIndex] jsonResponse: ${jsonResponse}" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:indexManagement:getWriteIndex] Calling python /tmp/scripts/getWriteIndex.py \"${policy}\"" >> /tmp/imdebug.log
+  if ! writeIndices="$(python /tmp/scripts/getWriteIndex.py "${policy}" "$jsonResponse")" ; then
+    echo "$(date): [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py \"${policy}\" failed! writeIndices: '${writeIndices}' Returning rc 1" >> /tmp/imdebug.log
+    echo $writeIndices
+    return 1
+  fi
+
+  echo "$(date): [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py \"${policy}\" succeeded. writeIndices: '${writeIndices}'" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:indexManagement:getWriteIndex] Calling ensureOneWriteIndex \"${policy}\" \"${writeIndices}\" -> writeIndex" >> /tmp/imdebug.log
+  writeIndex="$(ensureOneWriteIndex "$policy" "$writeIndices")"
+  echo "$(date): [sh:indexManagement:getWriteIndex] writeIndex: ${writeIndex}" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:indexManagement:getWriteIndex] Echoing writeIndex (${writeIndex})" >> /tmp/imdebug.log
+  echo $writeIndex
+}
+
+function ensureOneWriteIndex() {
+  echo "$(date): [sh:indexManagement:ensureOneWriteIndex] ENTRYPOINT" >> /tmp/imdebug.log
+
+  local policy="$1"
+  echo "$(date): [sh:indexManagement:ensureOneWriteIndex] policy=\$1: ${policy}" >> /tmp/imdebug.log
+  local writeIndices="$2"
+  echo "$(date): [sh:indexManagement:ensureOneWriteIndex] writeIndices=\$2: ${writeIndices}" >> /tmp/imdebug.log
+
+  # first index received is the latest one
+  writeIndex=""
+  echo "$(date): [sh:indexManagement:ensureOneWriteIndex] for index in writeIndices" >> /tmp/imdebug.log
+  for index in $writeIndices; do
+    echo "$(date): [sh:indexManagement:ensureOneWriteIndex] index: '${index}', writeIndex: '${writeIndex}'" >> /tmp/imdebug.log
+    if [ -z "$writeIndex" ]; then
+      writeIndex="$index"
+    else
+      # extra write index -- mark it as not a write index
+      echo "$(date): [sh:indexManagement:ensureOneWriteIndex] Calling removeAsWriteIndexForAlias \"${index}\" \"${policy}\"" >> /tmp/imdebug.log
+      removeAsWriteIndexForAlias "$index" "$policy"
+    fi
+  done
+
+  echo "$(date): [sh:indexManagement:ensureOneWriteIndex] Echoing writeIndex (${writeIndex})" >> /tmp/imdebug.log
+  echo $writeIndex
+}
+
+function getWriteAliases() {
+  echo "$(date): [sh:indexManagement:getWriteAliases] ENTRYPOINT" >> /tmp/imdebug.log
+
+  local policy="$1"
+  echo "$(date): [sh:indexManagement:getWriteAliases] policy=\$1: ${policy}" >> /tmp/imdebug.log
+
+  # "_cat/aliases/${policy}*-write?h=alias" | uniq
+  echo "$(date): [sh:indexManagement:getWriteAliases] Calling catWriteAliases \"${policy}\" -> aliasResponse" >> /tmp/imdebug.log
+  aliasResponse="$(catWriteAliases "$policy")"
+  echo "$(date): [sh:indexManagement:getWriteAliases] aliasResponse: '${aliasResponse}'" >> /tmp/imdebug.log
+
+  if [ -z "$aliasResponse" ]; then
+    echo "$(date): [sh:indexManagement:getWriteAliases] aliasResponse emtpy, Returning 1" >> /tmp/imdebug.log
+    echo "Received an empty response from elasticsearch -- server may not be ready"
+    return 1
+  fi
+
+  echo "$(date): [sh:indexManagement:getWriteAliases] Echoing aliasResponse (${aliasResponse})" >> /tmp/imdebug.log
+  echo $aliasResponse
+}
+
+function rollover() {
+  echo "$(date): [sh:indexManagement:rollover] ENTRYPOINT" >> /tmp/imdebug.log
+
+  local policy="$1"
+  echo "$(date): [sh:indexManagement:rollover] policy=\$1: ${policy}" >> /tmp/imdebug.log
+  local decoded="$2"
+  echo "$(date): [sh:indexManagement:rollover] decoded=\$2: ${decoded}" >> /tmp/imdebug.log
+
+  echo "========================"
+  echo "Index management rollover process starting for $policy"
+  echo ""
+
+  # get current write index
+  echo "$(date): [sh:indexManagement:rollover] Calling getWriteIndex \"${policy}-write\" -> writeIndex" >> /tmp/imdebug.log
+  if ! writeIndex="$(getWriteIndex "${policy}-write")" ; then
+    echo "$(date): [sh:indexManagement:rollover] getWriteIndex \"${policy}-write\" failed! Echoing writeIndex: '${writeIndex}', Returning 1" >> /tmp/imdebug.log
+    echo $writeIndex
+    return 1
+  fi
+  echo "$(date): [sh:indexManagement:rollover] getWriteIndex \"${policy}-write\" succeeded. writeIndex: '${writeIndex}'" >> /tmp/imdebug.log
+
+  echo "Current write index for ${policy}-write: $writeIndex"
+
+  # try to rollover
+  echo "$(date): [sh:indexManagement:rollover] Calling rolloverForPolicy \"${policy}-write\" \"$decoded\" -> responseRollover" >> /tmp/imdebug.log
+  responseRollover="$(rolloverForPolicy "${policy}-write" "$decoded")"
+  echo "$(date): [sh:indexManagement:rollover] responseRollover: '${responseRollover}'" >> /tmp/imdebug.log
+
+  echo "Checking results from _rollover call"
+
+  if [ "$responseRollover" == False ] ; then
+    # already in bad state
+    echo "Calculating next write index based on current write index..."
+
+    indexGeneration="$(echo $writeIndex | cut -d'-' -f2)"
+    writeBase="$(echo $writeIndex | cut -d'-' -f1)"
+
+    # if we don't strip off the leading 0s it does math wrong...
+    generation="$(echo $indexGeneration | sed 's/^0*//')"
+    # pad the index name again with 0s
+    nextGeneration="$(printf '%06g' $(($generation + 1)))"
+    nextIndex="$writeBase-$nextGeneration"
+    
+    echo "$(date): [sh:indexManagement:rollover] responseRollover=False, Calculating next write index based on current write index" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] indexGeneration: '${indexGeneration}'" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] writeBase: '${writeBase}'" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] generation: '${generation}'" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] nextGeneration: '${nextGeneration}'" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] nextIndex: '${nextIndex}'" >> /tmp/imdebug.log
+
+  else
+    # check response to see if it did roll over (field in response)
+    echo "$(date): [sh:indexManagement:rollover] responseRollover!=False, check response to see if it did roll over (field in response)" >> /tmp/imdebug.log
+
+    echo "$(date): [sh:indexManagement:rollover] Calling python /tmp/scripts/checkRollover.py \"/tmp/response.txt\" \"${writeIndex}\" -> nextIndex" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:rollover] Cating /tmp/response.txt:" >> /tmp/imdebug.log
+    cat /tmp/response.txt &>> /tmp/imdebug.log || true
+    if ! nextIndex="$(python /tmp/scripts/checkRollover.py "/tmp/response.txt" "$writeIndex")" ; then
+
+      echo "$(date): [sh:indexManagement:rollover] python /tmp/scripts/checkRollover.py \"/tmp/response.txt\" \"${writeIndex}\" failed! Echoing nextIndex: '${nextIndex}', Returning 1" >> /tmp/imdebug.log
+      echo $nextIndex
+      return 1
+    fi
+    echo "$(date): [sh:indexManagement:rollover] python /tmp/scripts/checkRollover.py \"/tmp/response.txt\" \"${writeIndex}\" succeeded. nextIndex: '${nextIndex}'" >> /tmp/imdebug.log
+  fi
+  
+
+  echo "Next write index for ${policy}-write: $nextIndex"
+  echo "$(date): [sh:indexManagement:rollover] Next write index for ${policy}-write: ${nextIndex}" >> /tmp/imdebug.log
+
+  echo "Checking if $nextIndex exists"
+
+  # if true, ensure next index was created and
+  # cluster permits operations on it, e.g. not in read-only
+  # state because of low disk space.
+  echo "$(date): [sh:indexManagement:rollover] Calling checkIndexExists \"${nextIndex}\" -> indexExists" >> /tmp/imdebug.log
+  indexExists="$(checkIndexExists "$nextIndex")"
+  echo "$(date): [sh:indexManagement:rollover] indexExists: '${indexExists}'" >> /tmp/imdebug.log
+  if [ "$indexExists" == False ] ; then
+    cat /tmp/response.txt
+    return 1
+  fi
+
+  echo "Checking if $nextIndex is the write index for ${policy}-write"
+
+  ## if true, ensure write-alias points to next index
+  echo "$(date): [sh:indexManagement:rollover] Calling getWriteIndex \"${policy}-write\" -> writeIndex" >> /tmp/imdebug.log
+  if ! writeIndex="$(getWriteIndex "${policy}-write")" ; then
+    echo "$(date): [sh:indexManagement:rollover] getWriteIndex \"${policy}-write\" failed! writeIndex: '${writeIndex}', Returning 1" >> /tmp/imdebug.log
+    echo $writeIndex
+    return 1
+  fi
+  echo "$(date): [sh:indexManagement:rollover] getWriteIndex \"${policy}-write\" succeeded. writeIndex: '${writeIndex}'" >> /tmp/imdebug.log
+
+
+  echo "$(date): [sh:indexManagement:rollover] Comparing nextIndex: '${nextIndex}' and writeIndex: '${writeIndex}'" >> /tmp/imdebug.log
+  if [ "$nextIndex" == "$writeIndex" ] ; then
+    echo "$(date): [sh:indexManagement:rollover] nextIndex == writeIndex. Done. Returning 0" >> /tmp/imdebug.log
+    echo "Done!"
+    return 0
+  fi
+
+  echo "Updating alias for ${policy}-write"
+  echo "$(date): [sh:indexManagement:rollover] nextIndex != writeIndex. Updating alias for ${policy}-write" >> /tmp/imdebug.log
+
+  # else - try to update alias to be correct
+  echo "$(date): [sh:indexManagement:rollover] Calling updateWriteIndex \"$writeIndex\" \"$nextIndex\" \"${policy}-write\" -> responseUpdateWriteIndex" >> /tmp/imdebug.log
+  responseUpdateWriteIndex="$(updateWriteIndex "$writeIndex" "$nextIndex" "${policy}-write")"
+  echo "$(date): [sh:indexManagement:rollover] responseUpdateWriteIndex: '${responseUpdateWriteIndex}'" >> /tmp/imdebug.log
+
+  if [ "$responseUpdateWriteIndex" == True ] ; then
+    echo "$(date): [sh:indexManagement:rollover] responseUpdateWriteIndex == True. Done. Returning 0" >> /tmp/imdebug.log
+    echo "Done!"
+    return 0
+  fi
+  
+  echo "$(date): [sh:indexManagement:rollover] responseUpdateWriteIndex != True. Cating /tmp/response.txt and Returning 1" >> /tmp/imdebug.log
+  echo "$(date): [sh:indexManagement:rollover] Cating /tmp/response.txt:" >> /tmp/imdebug.log
+  cat /tmp/response.txt &>> /tmp/imdebug.log || true
+  cat /tmp/response.txt
+  return 1
+}
+
+function delete() {
+  echo "$(date): [sh:indexManagement:delete] ENTRYPOINT" >> /tmp/imdebug.log
+
+  local policy="$1"
+  echo "$(date): [sh:indexManagement:delete] policy=\$1: ${policy}" >> /tmp/imdebug.log
+
+  ERRORS="$(mktemp /tmp/delete-XXXXXX)"
+
+  echo "========================"
+  echo "Index management delete process starting for $policy"
+  echo ""
+
+  echo "$(date): [sh:indexManagement:delete] Calling getWriteIndex \"${policy}-write\" -> writeIndex" >> /tmp/imdebug.log
+  if ! writeIndex="$(getWriteIndex "${policy}-write")" ; then
+    echo "$(date): [sh:indexManagement:delete] getWriteIndex \"${policy}-write\" failed! Echoing writeIndex: '${writeIndex}', Returning 1" >> /tmp/imdebug.log
+    echo $writeIndex
+    return 1
+  fi
+  echo "$(date): [sh:indexManagement:delete] getWriteIndex \"${policy}-write\" succeeded. writeIndex: '${writeIndex}'" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:indexManagement:delete] Calling getIndicesAgeForAlias \"${policy}-write\" -> indices" >> /tmp/imdebug.log
+  indices="$(getIndicesAgeForAlias "${policy}-write")"
+  echo "$(date): [sh:indexManagement:delete] indices: '${indices}'" >> /tmp/imdebug.log
+
+  if [ -z "$indices" ]; then
+    echo "$(date): [sh:indexManagement:delete] indices empty, Returning 1" >> /tmp/imdebug.log
+    echo "Received an empty response from elasticsearch -- server may not be ready"
+    return 1
+  fi
+
+  jsonResponse="$(echo [$indices] | sed 's/}{/},{/g')"
+  echo "$(date): [sh:indexManagement:delete] jsonResponse: '${jsonResponse}'" >> /tmp/imdebug.log
+
+  # Delete in batches of 25 for cases where there are a large number of indices to remove
+  nowInMillis=$(date +%s%3N)
+  minAgeFromEpoc=$(($nowInMillis - $MIN_AGE))
+  echo "$(date): [sh:indexManagement:delete] nowInMillis: '${nowInMillis}'" >> /tmp/imdebug.log
+  echo "$(date): [sh:indexManagement:delete] minAgeFromEpoc: '${minAgeFromEpoc}'" >> /tmp/imdebug.log
+
+  echo "$(date): [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py \"${minAgeFromEpoc}\" \"${writeIndex}\" \"${jsonResponse}\" 2>> ${ERRORS} -> indices" >> /tmp/imdebug.log
+  if ! indices=$(python /tmp/scripts/getNext25Indices.py "$minAgeFromEpoc" "$writeIndex" "$jsonResponse" 2>>$ERRORS) ; then
+    echo "$(date): [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py \"${minAgeFromEpoc}\" \"${writeIndex}\" \"${jsonResponse}\" failed! indices: '${indices}', Returning 1" >> /tmp/imdebug.log
+    echo "$(date): [sh:indexManagement:delete] Cating ${ERRORS}:" >> /tmp/imdebug.log
+    cat "${ERRORS}" &>> /tmp/imdebug.log || true
+    cat $ERRORS
+    rm $ERRORS
+    return 1
+  fi
+  echo "$(date): [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py \"${minAgeFromEpoc}\" \"${writeIndex}\" \"${jsonResponse}\" succeeded. indices: '${indices}'" >> /tmp/imdebug.log
+  echo "$(date): [sh:indexManagement:delete] Cating ${ERRORS}:" >> /tmp/imdebug.log
+  cat "${ERRORS}" &>> /tmp/imdebug.log || true
+  # Dump any findings to stdout but don't error
+  if [ -s $ERRORS ]; then
+    cat $ERRORS
+    rm $ERRORS
+  fi
+
+  if [ "${indices}" == "" ] ; then
+      echo "$(date): [sh:indexManagement:delete] indices == '', No indices to delete, Returning 0" >> /tmp/imdebug.log
+      echo No indices to delete
+      return 0
+  else
+      echo deleting indices: "${indices}"
+      echo "$(date): [sh:indexManagement:delete] deleting indices: '${indices}'" >> /tmp/imdebug.log
+  fi
+
+  echo "$(date): [sh:indexManagement:delete] for sets in indices" >> /tmp/imdebug.log
+  for sets in ${indices}; do
+    echo "$(date): [sh:indexManagement:delete] sets: '${sets}'" >> /tmp/imdebug.log
+    
+    echo "$(date): [sh:indexManagement:delete] Calling deleteIndices \"${sets}\" -> response" >> /tmp/imdebug.log
+    response="$(deleteIndices "${sets}")"
+    echo "$(date): [sh:indexManagement:delete] response: '${response}'" >> /tmp/imdebug.log
+
+    if [ "$response" == False ] ; then
+      echo "$(date): [sh:indexManagement:delete] response == False, Returning 1" >> /tmp/imdebug.log
+      cat /tmp/response.txt
+      return 1
+    fi
+    echo "$(date): [sh:indexManagement:delete] response != False" >> /tmp/imdebug.log
+  done
+
+  echo "$(date): [sh:indexManagement:delete] Done" >> /tmp/imdebug.log
+  echo "Done!"
+}
+
+function getAlias() {
+  local alias="$1"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.getAlias("'$alias'"))'
+}
+
+function getIndicesAgeForAlias() {
+  local alias="$1"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.getIndicesAgeForAlias("'$alias'"))'
+}
+
+function deleteIndices() {
+  local index="$1"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.deleteIndices("'$index'"))'
+}
+
+function removeAsWriteIndexForAlias() {
+  local index="$1"
+  local alias="$2"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.removeAsWriteIndexForAlias("'$index'","'$alias'"))' > /tmp/response.txt
+}
+
+function catWriteAliases() {
+  local policy="$1"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.catWriteAliases("'$policy'"))'
+}
+
+function rolloverForPolicy() {
+  local policy="$1"
+  local decoded="$2"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.rolloverForPolicy("'$policy'",'$decoded'))'
+}
+
+function checkIndexExists() {
+  local index="$1"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.checkIndexExists("'$index'"))'
+}
+
+function updateWriteIndex() {
+  currentIndex="$1"
+  nextIndex="$2"
+  alias="$3"
+
+  python -c 'import indexManagementClient; print(indexManagementClient.updateWriteIndex("'$currentIndex'","'$nextIndex'","'$alias'"))'
+}

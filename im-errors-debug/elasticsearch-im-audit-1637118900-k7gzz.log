@@ -1,0 +1,212 @@
+========================
+Index management delete process starting for audit
+
+No indices to delete
+========================
+Index management rollover process starting for audit
+
+Received an empty response from elasticsearch -- server may not be ready
+#### cat /tmp/imdebug.log
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] ENTRYPOINT
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] POLICY_MAPPING=audit
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] MIN_AGE=604800000
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] PAYLOAD=eyJjb25kaXRpb25zIjp7Im1heF9hZ2UiOiI4aCIsIm1heF9kb2NzIjoxMjI4ODAwMDAsIm1heF9zaXplIjoiMTIwZ2IifX0=
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] ES_SERVICE=https://elasticsearch:9200
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete-then-rollover] Calling /tmp/scripts/delete
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete] ENTRYPOINT
+Wed Nov 17 03:15:09 UTC 2021: [sh:delete] Calling writeAliases = getWriteAliases audit
+Wed Nov 17 03:15:09 UTC 2021: [sh:indexManagement:getWriteAliases] ENTRYPOINT
+Wed Nov 17 03:15:09 UTC 2021: [sh:indexManagement:getWriteAliases] policy=$1: audit
+Wed Nov 17 03:15:09 UTC 2021: [sh:indexManagement:getWriteAliases] Calling catWriteAliases "audit" -> aliasResponse
+2021-11-17 03:15:10,336: [catWriteAliases] FUNC_INIT: {'policy': 'audit'}
+2021-11-17 03:15:10,336: [getEsClient] FUNC_INIT: {}
+2021-11-17 03:15:10,340: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 03:15:10,470: [_make_request] https://elasticsearch:9200 "GET /_cat/aliases/audit*-write?h=alias HTTP/1.1" 200 252
+2021-11-17 03:15:10,472: [log_request_success] GET https://elasticsearch:9200/_cat/aliases/audit*-write?h=alias [status:200 request:0.131s]
+2021-11-17 03:15:10,472: [log_request_success] > None
+2021-11-17 03:15:10,472: [log_request_success] < audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+
+2021-11-17 03:15:10,473: [catWriteAliases] response=audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+
+2021-11-17 03:15:10,473: [catWriteAliases] response_list=['audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', '']
+2021-11-17 03:15:10,473: [catWriteAliases] RETURN:  audit-write
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:getWriteAliases] aliasResponse: ' audit-write'
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:getWriteAliases] Echoing aliasResponse ( audit-write)
+Wed Nov 17 03:15:10 UTC 2021: [sh:delete] writeAliases: 'audit-write'
+Wed Nov 17 03:15:10 UTC 2021: [sh:delete] for aliasBase in $writeAliases
+Wed Nov 17 03:15:10 UTC 2021: [sh:delete] aliasBase: audit-write
+Wed Nov 17 03:15:10 UTC 2021: [sh:delete] alias: audit
+Wed Nov 17 03:15:10 UTC 2021: [sh:delete] Calling 'delete "audit"'
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:delete] ENTRYPOINT
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:delete] policy=$1: audit
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:delete] Calling getWriteIndex "audit-write" -> writeIndex
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:getWriteIndex] ENTRYPOINT
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:getWriteIndex] policy=$1: audit-write
+Wed Nov 17 03:15:10 UTC 2021: [sh:indexManagement:getWriteIndex] Calling 'getAlias "audit-write"'
+2021-11-17 03:15:11,056: [getAlias] FUNC_INIT: {'alias': 'audit-write'}
+2021-11-17 03:15:11,056: [getEsClient] FUNC_INIT: {}
+2021-11-17 03:15:11,060: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 03:15:11,110: [_make_request] https://elasticsearch:9200 "GET /_alias/audit-write HTTP/1.1" 200 1428
+2021-11-17 03:15:11,112: [log_request_success] GET https://elasticsearch:9200/_alias/audit-write [status:200 request:0.052s]
+2021-11-17 03:15:11,112: [log_request_success] > None
+2021-11-17 03:15:11,112: [log_request_success] < {"audit-000011":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000009":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000006":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000004":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000007":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000016":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000013":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000003":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000015":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000008":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000020":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000021":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000019":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000022":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000012":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000010":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000014":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000017":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000023":{"aliases":{"audit-write":{"is_write_index":true}}},"audit-000018":{"aliases":{"audit-write":{"is_write_index":false}}},"audit-000005":{"aliases":{"audit-write":{"is_write_index":false}}}}
+2021-11-17 03:15:11,113: [getAlias] RETURN: {"audit-000011": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000009": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000006": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000004": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000007": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000016": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000013": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000003": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000015": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000008": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000020": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000021": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000019": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000022": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000012": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000010": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000014": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000017": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000023": {"aliases": {"audit-write": {"is_write_index": true}}}, "audit-000018": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000005": {"aliases": {"audit-write": {"is_write_index": false}}}}
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] aliasResponse: {"audit-000011": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000009": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000006": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000004": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000007": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000016": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000013": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000003": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000015": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000008": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000020": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000021": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000019": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000022": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000012": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000010": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000014": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000017": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000023": {"aliases": {"audit-write": {"is_write_index": true}}}, "audit-000018": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000005": {"aliases": {"audit-write": {"is_write_index": false}}}}
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] jsonResponse: [{"audit-000011": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000009": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000006": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000004": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000007": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000016": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000013": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000003": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000015": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000008": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000020": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000021": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000019": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000022": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000012": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000010": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000014": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000017": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000023": {"aliases": {"audit-write": {"is_write_index": true}}}, "audit-000018": {"aliases": {"audit-write": {"is_write_index": false}}}, "audit-000005": {"aliases": {"audit-write": {"is_write_index": false}}}}]
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] Calling python /tmp/scripts/getWriteIndex.py "audit-write"
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py "audit-write" succeeded. writeIndices: 'audit-000023'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] Calling ensureOneWriteIndex "audit-write" "audit-000023" -> writeIndex
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] ENTRYPOINT
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] policy=$1: audit-write
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] writeIndices=$2: audit-000023
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] for index in writeIndices
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] index: 'audit-000023', writeIndex: ''
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] Echoing writeIndex (audit-000023)
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] writeIndex: audit-000023
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:getWriteIndex] Echoing writeIndex (audit-000023)
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] getWriteIndex "audit-write" succeeded. writeIndex: 'audit-000023'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] Calling getIndicesAgeForAlias "audit-write" -> indices
+2021-11-17 03:15:11,713: [getIndicesAgeForAlias] FUNC_INIT: {'alias': 'audit-write'}
+2021-11-17 03:15:11,713: [getEsClient] FUNC_INIT: {}
+2021-11-17 03:15:11,716: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 03:15:11,799: [_make_request] https://elasticsearch:9200 "GET /audit-write/_settings/index.creation_date HTTP/1.1" 200 1513
+2021-11-17 03:15:11,801: [log_request_success] GET https://elasticsearch:9200/audit-write/_settings/index.creation_date [status:200 request:0.085s]
+2021-11-17 03:15:11,801: [log_request_success] > None
+2021-11-17 03:15:11,802: [log_request_success] < {"audit-000018":{"settings":{"index":{"creation_date":"1636953317030"}}},"audit-000022":{"settings":{"index":{"creation_date":"1637070309422"}}},"audit-000021":{"settings":{"index":{"creation_date":"1637041508562"}}},"audit-000011":{"settings":{"index":{"creation_date":"1636748113920"}}},"audit-000008":{"settings":{"index":{"creation_date":"1636661710189"}}},"audit-000019":{"settings":{"index":{"creation_date":"1636983011676"}}},"audit-000023":{"settings":{"index":{"creation_date":"1637100014310"}}},"audit-000014":{"settings":{"index":{"creation_date":"1636835411794"}}},"audit-000020":{"settings":{"index":{"creation_date":"1637011814247"}}},"audit-000013":{"settings":{"index":{"creation_date":"1636806609284"}}},"audit-000007":{"settings":{"index":{"creation_date":"1636632016087"}}},"audit-000015":{"settings":{"index":{"creation_date":"1636865114915"}}},"audit-000005":{"settings":{"index":{"creation_date":"1636573519142"}}},"audit-000012":{"settings":{"index":{"creation_date":"1636776918322"}}},"audit-000017":{"settings":{"index":{"creation_date":"1636924511708"}}},"audit-000009":{"settings":{"index":{"creation_date":"1636690513112"}}},"audit-000016":{"settings":{"index":{"creation_date":"1636894816891"}}},"audit-000003":{"settings":{"index":{"creation_date":"1636515013557"}}},"audit-000010":{"settings":{"index":{"creation_date":"1636719313337"}}},"audit-000004":{"settings":{"index":{"creation_date":"1636544709884"}}},"audit-000006":{"settings":{"index":{"creation_date":"1636603213281"}}}}
+2021-11-17 03:15:11,802: [getIndicesAgeForAlias] RETURN: {"audit-000018": {"settings": {"index": {"creation_date": "1636953317030"}}}, "audit-000022": {"settings": {"index": {"creation_date": "1637070309422"}}}, "audit-000021": {"settings": {"index": {"creation_date": "1637041508562"}}}, "audit-000011": {"settings": {"index": {"creation_date": "1636748113920"}}}, "audit-000008": {"settings": {"index": {"creation_date": "1636661710189"}}}, "audit-000019": {"settings": {"index": {"creation_date": "1636983011676"}}}, "audit-000023": {"settings": {"index": {"creation_date": "1637100014310"}}}, "audit-000014": {"settings": {"index": {"creation_date": "1636835411794"}}}, "audit-000020": {"settings": {"index": {"creation_date": "1637011814247"}}}, "audit-000013": {"settings": {"index": {"creation_date": "1636806609284"}}}, "audit-000007": {"settings": {"index": {"creation_date": "1636632016087"}}}, "audit-000015": {"settings": {"index": {"creation_date": "1636865114915"}}}, "audit-000005": {"settings": {"index": {"creation_date": "1636573519142"}}}, "audit-000012": {"settings": {"index": {"creation_date": "1636776918322"}}}, "audit-000017": {"settings": {"index": {"creation_date": "1636924511708"}}}, "audit-000009": {"settings": {"index": {"creation_date": "1636690513112"}}}, "audit-000016": {"settings": {"index": {"creation_date": "1636894816891"}}}, "audit-000003": {"settings": {"index": {"creation_date": "1636515013557"}}}, "audit-000010": {"settings": {"index": {"creation_date": "1636719313337"}}}, "audit-000004": {"settings": {"index": {"creation_date": "1636544709884"}}}, "audit-000006": {"settings": {"index": {"creation_date": "1636603213281"}}}}
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] indices: '{"audit-000018": {"settings": {"index": {"creation_date": "1636953317030"}}}, "audit-000022": {"settings": {"index": {"creation_date": "1637070309422"}}}, "audit-000021": {"settings": {"index": {"creation_date": "1637041508562"}}}, "audit-000011": {"settings": {"index": {"creation_date": "1636748113920"}}}, "audit-000008": {"settings": {"index": {"creation_date": "1636661710189"}}}, "audit-000019": {"settings": {"index": {"creation_date": "1636983011676"}}}, "audit-000023": {"settings": {"index": {"creation_date": "1637100014310"}}}, "audit-000014": {"settings": {"index": {"creation_date": "1636835411794"}}}, "audit-000020": {"settings": {"index": {"creation_date": "1637011814247"}}}, "audit-000013": {"settings": {"index": {"creation_date": "1636806609284"}}}, "audit-000007": {"settings": {"index": {"creation_date": "1636632016087"}}}, "audit-000015": {"settings": {"index": {"creation_date": "1636865114915"}}}, "audit-000005": {"settings": {"index": {"creation_date": "1636573519142"}}}, "audit-000012": {"settings": {"index": {"creation_date": "1636776918322"}}}, "audit-000017": {"settings": {"index": {"creation_date": "1636924511708"}}}, "audit-000009": {"settings": {"index": {"creation_date": "1636690513112"}}}, "audit-000016": {"settings": {"index": {"creation_date": "1636894816891"}}}, "audit-000003": {"settings": {"index": {"creation_date": "1636515013557"}}}, "audit-000010": {"settings": {"index": {"creation_date": "1636719313337"}}}, "audit-000004": {"settings": {"index": {"creation_date": "1636544709884"}}}, "audit-000006": {"settings": {"index": {"creation_date": "1636603213281"}}}}'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] jsonResponse: '[{"audit-000018": {"settings": {"index": {"creation_date": "1636953317030"}}}, "audit-000022": {"settings": {"index": {"creation_date": "1637070309422"}}}, "audit-000021": {"settings": {"index": {"creation_date": "1637041508562"}}}, "audit-000011": {"settings": {"index": {"creation_date": "1636748113920"}}}, "audit-000008": {"settings": {"index": {"creation_date": "1636661710189"}}}, "audit-000019": {"settings": {"index": {"creation_date": "1636983011676"}}}, "audit-000023": {"settings": {"index": {"creation_date": "1637100014310"}}}, "audit-000014": {"settings": {"index": {"creation_date": "1636835411794"}}}, "audit-000020": {"settings": {"index": {"creation_date": "1637011814247"}}}, "audit-000013": {"settings": {"index": {"creation_date": "1636806609284"}}}, "audit-000007": {"settings": {"index": {"creation_date": "1636632016087"}}}, "audit-000015": {"settings": {"index": {"creation_date": "1636865114915"}}}, "audit-000005": {"settings": {"index": {"creation_date": "1636573519142"}}}, "audit-000012": {"settings": {"index": {"creation_date": "1636776918322"}}}, "audit-000017": {"settings": {"index": {"creation_date": "1636924511708"}}}, "audit-000009": {"settings": {"index": {"creation_date": "1636690513112"}}}, "audit-000016": {"settings": {"index": {"creation_date": "1636894816891"}}}, "audit-000003": {"settings": {"index": {"creation_date": "1636515013557"}}}, "audit-000010": {"settings": {"index": {"creation_date": "1636719313337"}}}, "audit-000004": {"settings": {"index": {"creation_date": "1636544709884"}}}, "audit-000006": {"settings": {"index": {"creation_date": "1636603213281"}}}}]'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] nowInMillis: '1637118911865'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] minAgeFromEpoc: '1636514111865'
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py "1636514111865" "audit-000023" "[{"audit-000018": {"settings": {"index": {"creation_date": "1636953317030"}}}, "audit-000022": {"settings": {"index": {"creation_date": "1637070309422"}}}, "audit-000021": {"settings": {"index": {"creation_date": "1637041508562"}}}, "audit-000011": {"settings": {"index": {"creation_date": "1636748113920"}}}, "audit-000008": {"settings": {"index": {"creation_date": "1636661710189"}}}, "audit-000019": {"settings": {"index": {"creation_date": "1636983011676"}}}, "audit-000023": {"settings": {"index": {"creation_date": "1637100014310"}}}, "audit-000014": {"settings": {"index": {"creation_date": "1636835411794"}}}, "audit-000020": {"settings": {"index": {"creation_date": "1637011814247"}}}, "audit-000013": {"settings": {"index": {"creation_date": "1636806609284"}}}, "audit-000007": {"settings": {"index": {"creation_date": "1636632016087"}}}, "audit-000015": {"settings": {"index": {"creation_date": "1636865114915"}}}, "audit-000005": {"settings": {"index": {"creation_date": "1636573519142"}}}, "audit-000012": {"settings": {"index": {"creation_date": "1636776918322"}}}, "audit-000017": {"settings": {"index": {"creation_date": "1636924511708"}}}, "audit-000009": {"settings": {"index": {"creation_date": "1636690513112"}}}, "audit-000016": {"settings": {"index": {"creation_date": "1636894816891"}}}, "audit-000003": {"settings": {"index": {"creation_date": "1636515013557"}}}, "audit-000010": {"settings": {"index": {"creation_date": "1636719313337"}}}, "audit-000004": {"settings": {"index": {"creation_date": "1636544709884"}}}, "audit-000006": {"settings": {"index": {"creation_date": "1636603213281"}}}}]" 2>> /tmp/delete-U0vyks -> indices
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py "1636514111865" "audit-000023" "[{"audit-000018": {"settings": {"index": {"creation_date": "1636953317030"}}}, "audit-000022": {"settings": {"index": {"creation_date": "1637070309422"}}}, "audit-000021": {"settings": {"index": {"creation_date": "1637041508562"}}}, "audit-000011": {"settings": {"index": {"creation_date": "1636748113920"}}}, "audit-000008": {"settings": {"index": {"creation_date": "1636661710189"}}}, "audit-000019": {"settings": {"index": {"creation_date": "1636983011676"}}}, "audit-000023": {"settings": {"index": {"creation_date": "1637100014310"}}}, "audit-000014": {"settings": {"index": {"creation_date": "1636835411794"}}}, "audit-000020": {"settings": {"index": {"creation_date": "1637011814247"}}}, "audit-000013": {"settings": {"index": {"creation_date": "1636806609284"}}}, "audit-000007": {"settings": {"index": {"creation_date": "1636632016087"}}}, "audit-000015": {"settings": {"index": {"creation_date": "1636865114915"}}}, "audit-000005": {"settings": {"index": {"creation_date": "1636573519142"}}}, "audit-000012": {"settings": {"index": {"creation_date": "1636776918322"}}}, "audit-000017": {"settings": {"index": {"creation_date": "1636924511708"}}}, "audit-000009": {"settings": {"index": {"creation_date": "1636690513112"}}}, "audit-000016": {"settings": {"index": {"creation_date": "1636894816891"}}}, "audit-000003": {"settings": {"index": {"creation_date": "1636515013557"}}}, "audit-000010": {"settings": {"index": {"creation_date": "1636719313337"}}}, "audit-000004": {"settings": {"index": {"creation_date": "1636544709884"}}}, "audit-000006": {"settings": {"index": {"creation_date": "1636603213281"}}}}]" succeeded. indices: ''
+Wed Nov 17 03:15:11 UTC 2021: [sh:indexManagement:delete] Cating /tmp/delete-U0vyks:
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:delete] indices == '', No indices to delete, Returning 0
+Wed Nov 17 03:15:12 UTC 2021: [sh:delete] 'delete "audit"' succeeded
+Wed Nov 17 03:15:12 UTC 2021: [sh:delete-then-rollover] ReturnCode of /tmp/scripts/delete is 0
+Wed Nov 17 03:15:12 UTC 2021: [sh:delete-then-rollover] Calling /tmp/scripts/rollover
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] ENTRYPOINT
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] decoded: {"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] Calling 'getWriteAliases "audit"'
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteAliases] ENTRYPOINT
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteAliases] policy=$1: audit
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteAliases] Calling catWriteAliases "audit" -> aliasResponse
+2021-11-17 03:15:12,497: [catWriteAliases] FUNC_INIT: {'policy': 'audit'}
+2021-11-17 03:15:12,497: [getEsClient] FUNC_INIT: {}
+2021-11-17 03:15:12,501: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 03:15:12,572: [_make_request] https://elasticsearch:9200 "GET /_cat/aliases/audit*-write?h=alias HTTP/1.1" 200 252
+2021-11-17 03:15:12,573: [log_request_success] GET https://elasticsearch:9200/_cat/aliases/audit*-write?h=alias [status:200 request:0.072s]
+2021-11-17 03:15:12,573: [log_request_success] > None
+2021-11-17 03:15:12,574: [log_request_success] < audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+
+2021-11-17 03:15:12,574: [catWriteAliases] response=audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+audit-write
+
+2021-11-17 03:15:12,574: [catWriteAliases] response_list=['audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', 'audit-write', '']
+2021-11-17 03:15:12,575: [catWriteAliases] RETURN:  audit-write
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteAliases] aliasResponse: ' audit-write'
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteAliases] Echoing aliasResponse ( audit-write)
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] writeAliases: audit-write
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] for aliasBase in $writeAliases
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] aliasBase: audit-write
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] alias: audit
+Wed Nov 17 03:15:12 UTC 2021: [sh:rollover] Calling 'rollover "audit"'
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:rollover] ENTRYPOINT
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:rollover] policy=$1: audit
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:rollover] decoded=$2: {"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:rollover] Calling getWriteIndex "audit-write" -> writeIndex
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteIndex] ENTRYPOINT
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteIndex] policy=$1: audit-write
+Wed Nov 17 03:15:12 UTC 2021: [sh:indexManagement:getWriteIndex] Calling 'getAlias "audit-write"'
+2021-11-17 03:15:13,137: [getAlias] FUNC_INIT: {'alias': 'audit-write'}
+2021-11-17 03:15:13,138: [getEsClient] FUNC_INIT: {}
+2021-11-17 03:15:13,143: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 03:15:13,261: [_make_request] https://elasticsearch:9200 "GET /_alias/audit-write HTTP/1.1" 500 231
+2021-11-17 03:15:13,263: [log_request_fail] GET https://elasticsearch:9200/_alias/audit-write [status:500 request:0.120s]
+2021-11-17 03:15:13,263: [log_request_fail] > None
+2021-11-17 03:15:13,264: [log_request_fail] < {"error":{"root_cause":[{"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"}],"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"},"status":500}
+2021-11-17 03:15:13,264: [getAlias] EXCEPTION: TransportError(500, 'security_exception', '_opendistro_security_dls_query does not match (SG 900D)')
+Wed Nov 17 03:15:13 UTC 2021: [sh:indexManagement:getWriteIndex] aliasResponse: 
+Wed Nov 17 03:15:13 UTC 2021: [sh:indexManagement:rollover] getWriteIndex "audit-write" failed! Echoing writeIndex: 'Received an empty response from elasticsearch -- server may not be ready', Returning 1
+Wed Nov 17 03:15:13 UTC 2021: [sh:rollover] 'rollover "audit"' failed! exiting with rc 1
+Wed Nov 17 03:15:13 UTC 2021: [sh:delete-then-rollover] ReturnCode of /tmp/scripts/rollover is 1
+#### eof /tmp/imdebug.log

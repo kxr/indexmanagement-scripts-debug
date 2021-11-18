@@ -1,0 +1,14 @@
+
+set -uo pipefail
+
+/tmp/scripts/delete
+delete_rc=$?
+
+/tmp/scripts/rollover
+rollover_rc=$?
+
+if [ $delete_rc -ne 0 ] || [ $rollover_rc -ne 0 ]; then
+    exit 1
+fi
+
+exit 0

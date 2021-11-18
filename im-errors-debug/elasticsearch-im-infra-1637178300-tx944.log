@@ -1,0 +1,260 @@
+========================
+Index management delete process starting for infra
+
+No indices to delete
+========================
+Index management rollover process starting for infra
+
+Current write index for infra-write: infra-000025
+/tmp/scripts/indexManagementClient.py:103: ElasticsearchDeprecationWarning: [types removal] The parameter include_type_name should be explicitly specified in rollover requests to prepare for 7.0. In 7.0 include_type_name will default to 'false', which means requests must omit the type name in mapping definitions.
+  response = es_client.indices.rollover(alias=alias, body=decoded)
+Checking results from _rollover call
+Calculating next write index based on current write index...
+Next write index for infra-write: infra-000026
+Checking if infra-000026 exists
+/tmp/scripts/indexManagementClient.py:119: ElasticsearchDeprecationWarning: [types removal] The parameter include_type_name should be explicitly specified in get indices requests to prepare for 7.0. In 7.0 include_type_name will default to 'false', which means responses will omit the type name in mapping definitions.
+  ret = es_client.indices.exists(index=index)
+TransportError(500, '')
+#### cat /tmp/imdebug.log
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] ENTRYPOINT
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] POLICY_MAPPING=infra
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] MIN_AGE=604800000
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] PAYLOAD=eyJjb25kaXRpb25zIjp7Im1heF9hZ2UiOiI4aCIsIm1heF9kb2NzIjoxMjI4ODAwMDAsIm1heF9zaXplIjoiMTIwZ2IifX0=
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] ES_SERVICE=https://elasticsearch:9200
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete-then-rollover] Calling /tmp/scripts/delete
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete] ENTRYPOINT
+Wed Nov 17 19:45:09 UTC 2021: [sh:delete] Calling writeAliases = getWriteAliases infra
+Wed Nov 17 19:45:09 UTC 2021: [sh:indexManagement:getWriteAliases] ENTRYPOINT
+Wed Nov 17 19:45:09 UTC 2021: [sh:indexManagement:getWriteAliases] policy=$1: infra
+Wed Nov 17 19:45:09 UTC 2021: [sh:indexManagement:getWriteAliases] Calling catWriteAliases "infra" -> aliasResponse
+2021-11-17 19:45:10,056: [catWriteAliases] FUNC_INIT: {'policy': 'infra'}
+2021-11-17 19:45:10,056: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:10,061: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:10,242: [_make_request] https://elasticsearch:9200 "GET /_cat/aliases/infra*-write?h=alias HTTP/1.1" 200 252
+2021-11-17 19:45:10,243: [log_request_success] GET https://elasticsearch:9200/_cat/aliases/infra*-write?h=alias [status:200 request:0.182s]
+2021-11-17 19:45:10,244: [log_request_success] > None
+2021-11-17 19:45:10,244: [log_request_success] < infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+
+2021-11-17 19:45:10,245: [catWriteAliases] response=infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+
+2021-11-17 19:45:10,245: [catWriteAliases] response_list=['infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', '']
+2021-11-17 19:45:10,245: [catWriteAliases] RETURN:  infra-write
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteAliases] aliasResponse: ' infra-write'
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteAliases] Echoing aliasResponse ( infra-write)
+Wed Nov 17 19:45:10 UTC 2021: [sh:delete] writeAliases: 'infra-write'
+Wed Nov 17 19:45:10 UTC 2021: [sh:delete] for aliasBase in $writeAliases
+Wed Nov 17 19:45:10 UTC 2021: [sh:delete] aliasBase: infra-write
+Wed Nov 17 19:45:10 UTC 2021: [sh:delete] alias: infra
+Wed Nov 17 19:45:10 UTC 2021: [sh:delete] Calling 'delete "infra"'
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:delete] ENTRYPOINT
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:delete] policy=$1: infra
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:delete] Calling getWriteIndex "infra-write" -> writeIndex
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] ENTRYPOINT
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] policy=$1: infra-write
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] Calling 'getAlias "infra-write"'
+2021-11-17 19:45:10,740: [getAlias] FUNC_INIT: {'alias': 'infra-write'}
+2021-11-17 19:45:10,740: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:10,744: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:10,796: [_make_request] https://elasticsearch:9200 "GET /_alias/infra-write HTTP/1.1" 200 1428
+2021-11-17 19:45:10,798: [log_request_success] GET https://elasticsearch:9200/_alias/infra-write [status:200 request:0.054s]
+2021-11-17 19:45:10,798: [log_request_success] > None
+2021-11-17 19:45:10,799: [log_request_success] < {"infra-000015":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000006":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000017":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000019":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000007":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000016":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000014":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000023":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000012":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000013":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000011":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000009":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000021":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000005":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000008":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000022":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000018":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000025":{"aliases":{"infra-write":{"is_write_index":true}}},"infra-000020":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000010":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000024":{"aliases":{"infra-write":{"is_write_index":false}}}}
+2021-11-17 19:45:10,799: [getAlias] RETURN: {"infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}}
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] aliasResponse: {"infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}}
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] jsonResponse: [{"infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}}]
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] Calling python /tmp/scripts/getWriteIndex.py "infra-write"
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py "infra-write" succeeded. writeIndices: 'infra-000025'
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:getWriteIndex] Calling ensureOneWriteIndex "infra-write" "infra-000025" -> writeIndex
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] ENTRYPOINT
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] policy=$1: infra-write
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] writeIndices=$2: infra-000025
+Wed Nov 17 19:45:10 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] for index in writeIndices
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] index: 'infra-000025', writeIndex: ''
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] Echoing writeIndex (infra-000025)
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:getWriteIndex] writeIndex: infra-000025
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:getWriteIndex] Echoing writeIndex (infra-000025)
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] getWriteIndex "infra-write" succeeded. writeIndex: 'infra-000025'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] Calling getIndicesAgeForAlias "infra-write" -> indices
+2021-11-17 19:45:11,408: [getIndicesAgeForAlias] FUNC_INIT: {'alias': 'infra-write'}
+2021-11-17 19:45:11,409: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:11,412: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:11,474: [_make_request] https://elasticsearch:9200 "GET /infra-write/_settings/index.creation_date HTTP/1.1" 200 1513
+2021-11-17 19:45:11,476: [log_request_success] GET https://elasticsearch:9200/infra-write/_settings/index.creation_date [status:200 request:0.064s]
+2021-11-17 19:45:11,477: [log_request_success] > None
+2021-11-17 19:45:11,477: [log_request_success] < {"infra-000008":{"settings":{"index":{"creation_date":"1636661711311"}}},"infra-000018":{"settings":{"index":{"creation_date":"1636955118522"}}},"infra-000011":{"settings":{"index":{"creation_date":"1636749914781"}}},"infra-000020":{"settings":{"index":{"creation_date":"1637014509291"}}},"infra-000022":{"settings":{"index":{"creation_date":"1637073015823"}}},"infra-000007":{"settings":{"index":{"creation_date":"1636632017037"}}},"infra-000014":{"settings":{"index":{"creation_date":"1636837211656"}}},"infra-000010":{"settings":{"index":{"creation_date":"1636720216439"}}},"infra-000023":{"settings":{"index":{"creation_date":"1637101818528"}}},"infra-000013":{"settings":{"index":{"creation_date":"1636808408818"}}},"infra-000021":{"settings":{"index":{"creation_date":"1637043316802"}}},"infra-000017":{"settings":{"index":{"creation_date":"1636925417259"}}},"infra-000015":{"settings":{"index":{"creation_date":"1636866916095"}}},"infra-000012":{"settings":{"index":{"creation_date":"1636778715337"}}},"infra-000024":{"settings":{"index":{"creation_date":"1637131508702"}}},"infra-000025":{"settings":{"index":{"creation_date":"1637160317262"}}},"infra-000019":{"settings":{"index":{"creation_date":"1636984811959"}}},"infra-000005":{"settings":{"index":{"creation_date":"1636573516602"}}},"infra-000009":{"settings":{"index":{"creation_date":"1636690525135"}}},"infra-000006":{"settings":{"index":{"creation_date":"1636603214496"}}},"infra-000016":{"settings":{"index":{"creation_date":"1636896615827"}}}}
+2021-11-17 19:45:11,479: [getIndicesAgeForAlias] RETURN: {"infra-000008": {"settings": {"index": {"creation_date": "1636661711311"}}}, "infra-000018": {"settings": {"index": {"creation_date": "1636955118522"}}}, "infra-000011": {"settings": {"index": {"creation_date": "1636749914781"}}}, "infra-000020": {"settings": {"index": {"creation_date": "1637014509291"}}}, "infra-000022": {"settings": {"index": {"creation_date": "1637073015823"}}}, "infra-000007": {"settings": {"index": {"creation_date": "1636632017037"}}}, "infra-000014": {"settings": {"index": {"creation_date": "1636837211656"}}}, "infra-000010": {"settings": {"index": {"creation_date": "1636720216439"}}}, "infra-000023": {"settings": {"index": {"creation_date": "1637101818528"}}}, "infra-000013": {"settings": {"index": {"creation_date": "1636808408818"}}}, "infra-000021": {"settings": {"index": {"creation_date": "1637043316802"}}}, "infra-000017": {"settings": {"index": {"creation_date": "1636925417259"}}}, "infra-000015": {"settings": {"index": {"creation_date": "1636866916095"}}}, "infra-000012": {"settings": {"index": {"creation_date": "1636778715337"}}}, "infra-000024": {"settings": {"index": {"creation_date": "1637131508702"}}}, "infra-000025": {"settings": {"index": {"creation_date": "1637160317262"}}}, "infra-000019": {"settings": {"index": {"creation_date": "1636984811959"}}}, "infra-000005": {"settings": {"index": {"creation_date": "1636573516602"}}}, "infra-000009": {"settings": {"index": {"creation_date": "1636690525135"}}}, "infra-000006": {"settings": {"index": {"creation_date": "1636603214496"}}}, "infra-000016": {"settings": {"index": {"creation_date": "1636896615827"}}}}
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] indices: '{"infra-000008": {"settings": {"index": {"creation_date": "1636661711311"}}}, "infra-000018": {"settings": {"index": {"creation_date": "1636955118522"}}}, "infra-000011": {"settings": {"index": {"creation_date": "1636749914781"}}}, "infra-000020": {"settings": {"index": {"creation_date": "1637014509291"}}}, "infra-000022": {"settings": {"index": {"creation_date": "1637073015823"}}}, "infra-000007": {"settings": {"index": {"creation_date": "1636632017037"}}}, "infra-000014": {"settings": {"index": {"creation_date": "1636837211656"}}}, "infra-000010": {"settings": {"index": {"creation_date": "1636720216439"}}}, "infra-000023": {"settings": {"index": {"creation_date": "1637101818528"}}}, "infra-000013": {"settings": {"index": {"creation_date": "1636808408818"}}}, "infra-000021": {"settings": {"index": {"creation_date": "1637043316802"}}}, "infra-000017": {"settings": {"index": {"creation_date": "1636925417259"}}}, "infra-000015": {"settings": {"index": {"creation_date": "1636866916095"}}}, "infra-000012": {"settings": {"index": {"creation_date": "1636778715337"}}}, "infra-000024": {"settings": {"index": {"creation_date": "1637131508702"}}}, "infra-000025": {"settings": {"index": {"creation_date": "1637160317262"}}}, "infra-000019": {"settings": {"index": {"creation_date": "1636984811959"}}}, "infra-000005": {"settings": {"index": {"creation_date": "1636573516602"}}}, "infra-000009": {"settings": {"index": {"creation_date": "1636690525135"}}}, "infra-000006": {"settings": {"index": {"creation_date": "1636603214496"}}}, "infra-000016": {"settings": {"index": {"creation_date": "1636896615827"}}}}'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] jsonResponse: '[{"infra-000008": {"settings": {"index": {"creation_date": "1636661711311"}}}, "infra-000018": {"settings": {"index": {"creation_date": "1636955118522"}}}, "infra-000011": {"settings": {"index": {"creation_date": "1636749914781"}}}, "infra-000020": {"settings": {"index": {"creation_date": "1637014509291"}}}, "infra-000022": {"settings": {"index": {"creation_date": "1637073015823"}}}, "infra-000007": {"settings": {"index": {"creation_date": "1636632017037"}}}, "infra-000014": {"settings": {"index": {"creation_date": "1636837211656"}}}, "infra-000010": {"settings": {"index": {"creation_date": "1636720216439"}}}, "infra-000023": {"settings": {"index": {"creation_date": "1637101818528"}}}, "infra-000013": {"settings": {"index": {"creation_date": "1636808408818"}}}, "infra-000021": {"settings": {"index": {"creation_date": "1637043316802"}}}, "infra-000017": {"settings": {"index": {"creation_date": "1636925417259"}}}, "infra-000015": {"settings": {"index": {"creation_date": "1636866916095"}}}, "infra-000012": {"settings": {"index": {"creation_date": "1636778715337"}}}, "infra-000024": {"settings": {"index": {"creation_date": "1637131508702"}}}, "infra-000025": {"settings": {"index": {"creation_date": "1637160317262"}}}, "infra-000019": {"settings": {"index": {"creation_date": "1636984811959"}}}, "infra-000005": {"settings": {"index": {"creation_date": "1636573516602"}}}, "infra-000009": {"settings": {"index": {"creation_date": "1636690525135"}}}, "infra-000006": {"settings": {"index": {"creation_date": "1636603214496"}}}, "infra-000016": {"settings": {"index": {"creation_date": "1636896615827"}}}}]'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] nowInMillis: '1637178311554'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] minAgeFromEpoc: '1636573511554'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py "1636573511554" "infra-000025" "[{"infra-000008": {"settings": {"index": {"creation_date": "1636661711311"}}}, "infra-000018": {"settings": {"index": {"creation_date": "1636955118522"}}}, "infra-000011": {"settings": {"index": {"creation_date": "1636749914781"}}}, "infra-000020": {"settings": {"index": {"creation_date": "1637014509291"}}}, "infra-000022": {"settings": {"index": {"creation_date": "1637073015823"}}}, "infra-000007": {"settings": {"index": {"creation_date": "1636632017037"}}}, "infra-000014": {"settings": {"index": {"creation_date": "1636837211656"}}}, "infra-000010": {"settings": {"index": {"creation_date": "1636720216439"}}}, "infra-000023": {"settings": {"index": {"creation_date": "1637101818528"}}}, "infra-000013": {"settings": {"index": {"creation_date": "1636808408818"}}}, "infra-000021": {"settings": {"index": {"creation_date": "1637043316802"}}}, "infra-000017": {"settings": {"index": {"creation_date": "1636925417259"}}}, "infra-000015": {"settings": {"index": {"creation_date": "1636866916095"}}}, "infra-000012": {"settings": {"index": {"creation_date": "1636778715337"}}}, "infra-000024": {"settings": {"index": {"creation_date": "1637131508702"}}}, "infra-000025": {"settings": {"index": {"creation_date": "1637160317262"}}}, "infra-000019": {"settings": {"index": {"creation_date": "1636984811959"}}}, "infra-000005": {"settings": {"index": {"creation_date": "1636573516602"}}}, "infra-000009": {"settings": {"index": {"creation_date": "1636690525135"}}}, "infra-000006": {"settings": {"index": {"creation_date": "1636603214496"}}}, "infra-000016": {"settings": {"index": {"creation_date": "1636896615827"}}}}]" 2>> /tmp/delete-zuY6vR -> indices
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] Calling python /tmp/scripts/getNext25Indices.py "1636573511554" "infra-000025" "[{"infra-000008": {"settings": {"index": {"creation_date": "1636661711311"}}}, "infra-000018": {"settings": {"index": {"creation_date": "1636955118522"}}}, "infra-000011": {"settings": {"index": {"creation_date": "1636749914781"}}}, "infra-000020": {"settings": {"index": {"creation_date": "1637014509291"}}}, "infra-000022": {"settings": {"index": {"creation_date": "1637073015823"}}}, "infra-000007": {"settings": {"index": {"creation_date": "1636632017037"}}}, "infra-000014": {"settings": {"index": {"creation_date": "1636837211656"}}}, "infra-000010": {"settings": {"index": {"creation_date": "1636720216439"}}}, "infra-000023": {"settings": {"index": {"creation_date": "1637101818528"}}}, "infra-000013": {"settings": {"index": {"creation_date": "1636808408818"}}}, "infra-000021": {"settings": {"index": {"creation_date": "1637043316802"}}}, "infra-000017": {"settings": {"index": {"creation_date": "1636925417259"}}}, "infra-000015": {"settings": {"index": {"creation_date": "1636866916095"}}}, "infra-000012": {"settings": {"index": {"creation_date": "1636778715337"}}}, "infra-000024": {"settings": {"index": {"creation_date": "1637131508702"}}}, "infra-000025": {"settings": {"index": {"creation_date": "1637160317262"}}}, "infra-000019": {"settings": {"index": {"creation_date": "1636984811959"}}}, "infra-000005": {"settings": {"index": {"creation_date": "1636573516602"}}}, "infra-000009": {"settings": {"index": {"creation_date": "1636690525135"}}}, "infra-000006": {"settings": {"index": {"creation_date": "1636603214496"}}}, "infra-000016": {"settings": {"index": {"creation_date": "1636896615827"}}}}]" succeeded. indices: ''
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] Cating /tmp/delete-zuY6vR:
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:delete] indices == '', No indices to delete, Returning 0
+Wed Nov 17 19:45:11 UTC 2021: [sh:delete] 'delete "infra"' succeeded
+Wed Nov 17 19:45:11 UTC 2021: [sh:delete-then-rollover] ReturnCode of /tmp/scripts/delete is 0
+Wed Nov 17 19:45:11 UTC 2021: [sh:delete-then-rollover] Calling /tmp/scripts/rollover
+Wed Nov 17 19:45:11 UTC 2021: [sh:rollover] ENTRYPOINT
+Wed Nov 17 19:45:11 UTC 2021: [sh:rollover] decoded: {"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}
+Wed Nov 17 19:45:11 UTC 2021: [sh:rollover] Calling 'getWriteAliases "infra"'
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:getWriteAliases] ENTRYPOINT
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:getWriteAliases] policy=$1: infra
+Wed Nov 17 19:45:11 UTC 2021: [sh:indexManagement:getWriteAliases] Calling catWriteAliases "infra" -> aliasResponse
+2021-11-17 19:45:12,117: [catWriteAliases] FUNC_INIT: {'policy': 'infra'}
+2021-11-17 19:45:12,118: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:12,122: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:12,180: [_make_request] https://elasticsearch:9200 "GET /_cat/aliases/infra*-write?h=alias HTTP/1.1" 200 252
+2021-11-17 19:45:12,182: [log_request_success] GET https://elasticsearch:9200/_cat/aliases/infra*-write?h=alias [status:200 request:0.060s]
+2021-11-17 19:45:12,182: [log_request_success] > None
+2021-11-17 19:45:12,183: [log_request_success] < infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+
+2021-11-17 19:45:12,183: [catWriteAliases] response=infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+infra-write
+
+2021-11-17 19:45:12,184: [catWriteAliases] response_list=['infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', 'infra-write', '']
+2021-11-17 19:45:12,184: [catWriteAliases] RETURN:  infra-write
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteAliases] aliasResponse: ' infra-write'
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteAliases] Echoing aliasResponse ( infra-write)
+Wed Nov 17 19:45:12 UTC 2021: [sh:rollover] writeAliases: infra-write
+Wed Nov 17 19:45:12 UTC 2021: [sh:rollover] for aliasBase in $writeAliases
+Wed Nov 17 19:45:12 UTC 2021: [sh:rollover] aliasBase: infra-write
+Wed Nov 17 19:45:12 UTC 2021: [sh:rollover] alias: infra
+Wed Nov 17 19:45:12 UTC 2021: [sh:rollover] Calling 'rollover "infra"'
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] ENTRYPOINT
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] policy=$1: infra
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] decoded=$2: {"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] Calling getWriteIndex "infra-write" -> writeIndex
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] ENTRYPOINT
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] policy=$1: infra-write
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] Calling 'getAlias "infra-write"'
+2021-11-17 19:45:12,688: [getAlias] FUNC_INIT: {'alias': 'infra-write'}
+2021-11-17 19:45:12,688: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:12,692: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:12,747: [_make_request] https://elasticsearch:9200 "GET /_alias/infra-write HTTP/1.1" 200 1428
+2021-11-17 19:45:12,748: [log_request_success] GET https://elasticsearch:9200/_alias/infra-write [status:200 request:0.056s]
+2021-11-17 19:45:12,749: [log_request_success] > None
+2021-11-17 19:45:12,749: [log_request_success] < {"infra-000022":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000006":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000011":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000013":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000017":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000016":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000009":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000021":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000012":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000018":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000019":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000007":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000010":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000014":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000020":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000005":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000024":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000025":{"aliases":{"infra-write":{"is_write_index":true}}},"infra-000015":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000008":{"aliases":{"infra-write":{"is_write_index":false}}},"infra-000023":{"aliases":{"infra-write":{"is_write_index":false}}}}
+2021-11-17 19:45:12,750: [getAlias] RETURN: {"infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}}
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] aliasResponse: {"infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}}
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] jsonResponse: [{"infra-000022": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000006": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000011": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000013": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000017": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000016": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000009": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000021": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000012": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000018": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000019": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000007": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000010": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000014": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000020": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000005": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000024": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000025": {"aliases": {"infra-write": {"is_write_index": true}}}, "infra-000015": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000008": {"aliases": {"infra-write": {"is_write_index": false}}}, "infra-000023": {"aliases": {"infra-write": {"is_write_index": false}}}}]
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] Calling python /tmp/scripts/getWriteIndex.py "infra-write"
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] python /tmp/scripts/getWriteIndex.py "infra-write" succeeded. writeIndices: 'infra-000025'
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] Calling ensureOneWriteIndex "infra-write" "infra-000025" -> writeIndex
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] ENTRYPOINT
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] policy=$1: infra-write
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] writeIndices=$2: infra-000025
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] for index in writeIndices
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] index: 'infra-000025', writeIndex: ''
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:ensureOneWriteIndex] Echoing writeIndex (infra-000025)
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] writeIndex: infra-000025
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:getWriteIndex] Echoing writeIndex (infra-000025)
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] getWriteIndex "infra-write" succeeded. writeIndex: 'infra-000025'
+Wed Nov 17 19:45:12 UTC 2021: [sh:indexManagement:rollover] Calling rolloverForPolicy "infra-write" "{"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}" -> responseRollover
+2021-11-17 19:45:13,411: [rolloverForPolicy] FUNC_INIT: {'decoded': {'conditions': {'max_age': '8h', 'max_docs': 122880000, 'max_size': '120gb'}}, 'alias': 'infra-write'}
+2021-11-17 19:45:13,411: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:13,417: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:13,487: [_make_request] https://elasticsearch:9200 "POST /infra-write/_rollover HTTP/1.1" 500 231
+2021-11-17 19:45:13,489: [log_request_fail] POST https://elasticsearch:9200/infra-write/_rollover [status:500 request:0.071s]
+2021-11-17 19:45:13,489: [log_request_fail] > {"conditions":{"max_age":"8h","max_docs":122880000,"max_size":"120gb"}}
+2021-11-17 19:45:13,490: [log_request_fail] < {"error":{"root_cause":[{"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"}],"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"},"status":500}
+2021-11-17 19:45:13,490: [rolloverForPolicy] EXCEPTION: TransportError(500, 'security_exception', '_opendistro_security_dls_query does not match (SG 900D)')
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] responseRollover: 'False'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] responseRollover=False, Calculating next write index based on current write index
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] indexGeneration: '000025'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] writeBase: 'infra'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] generation: '25'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] nextGeneration: '000026'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] nextIndex: 'infra-000026'
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] Next write index for infra-write: infra-000026
+Wed Nov 17 19:45:13 UTC 2021: [sh:indexManagement:rollover] Calling checkIndexExists "infra-000026" -> indexExists
+2021-11-17 19:45:14,016: [checkIndexExists] FUNC_INIT: {'index': 'infra-000026'}
+2021-11-17 19:45:14,016: [getEsClient] FUNC_INIT: {}
+2021-11-17 19:45:14,021: [_new_conn] Starting new HTTPS connection (1): elasticsearch:9200
+2021-11-17 19:45:14,087: [_make_request] https://elasticsearch:9200 "HEAD /infra-000026 HTTP/1.1" 500 0
+2021-11-17 19:45:14,090: [log_request_fail] HEAD https://elasticsearch:9200/infra-000026 [status:500 request:0.068s]
+2021-11-17 19:45:14,090: [log_request_fail] > None
+2021-11-17 19:45:14,091: [log_request_fail] < 
+2021-11-17 19:45:14,091: [checkIndexExists] EXCEPTION: TransportError(500, '')
+Wed Nov 17 19:45:14 UTC 2021: [sh:indexManagement:rollover] indexExists: 'False'
+Wed Nov 17 19:45:14 UTC 2021: [sh:rollover] 'rollover "infra"' failed! exiting with rc 1
+Wed Nov 17 19:45:14 UTC 2021: [sh:delete-then-rollover] ReturnCode of /tmp/scripts/rollover is 1
+#### eof /tmp/imdebug.log

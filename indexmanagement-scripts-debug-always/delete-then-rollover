@@ -1,0 +1,28 @@
+
+set -uo pipefail
+
+echo "$(date): [sh:delete-then-rollover] ENTRYPOINT" >> /tmp/imdebug.log
+echo "$(date): [sh:delete-then-rollover] POLICY_MAPPING=${POLICY_MAPPING}" >> /tmp/imdebug.log
+echo "$(date): [sh:delete-then-rollover] MIN_AGE=${MIN_AGE}" >> /tmp/imdebug.log
+echo "$(date): [sh:delete-then-rollover] PAYLOAD=${PAYLOAD}" >> /tmp/imdebug.log
+echo "$(date): [sh:delete-then-rollover] ES_SERVICE=${ES_SERVICE}" >> /tmp/imdebug.log
+
+echo "$(date): [sh:delete-then-rollover] Calling /tmp/scripts/delete" >> /tmp/imdebug.log
+/tmp/scripts/delete
+delete_rc=$?
+echo "$(date): [sh:delete-then-rollover] ReturnCode of /tmp/scripts/delete is ${delete_rc}" >> /tmp/imdebug.log
+
+echo "$(date): [sh:delete-then-rollover] Calling /tmp/scripts/rollover" >> /tmp/imdebug.log
+/tmp/scripts/rollover
+rollover_rc=$?
+echo "$(date): [sh:delete-then-rollover] ReturnCode of /tmp/scripts/rollover is ${rollover_rc}" >> /tmp/imdebug.log
+
+echo "#### cat /tmp/imdebug.log"
+cat /tmp/imdebug.log
+echo "#### eof /tmp/imdebug.log"
+
+if [ $delete_rc -ne 0 ] || [ $rollover_rc -ne 0 ]; then
+    exit 1
+fi
+
+exit 0
