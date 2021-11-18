@@ -44,7 +44,7 @@ Following is the description of files/directories present in this repository:
 
 These debug scripts are modified to log debugging information when the cronjob/scripts runs. The debug information can help identify the root cause of these random but recurring failing jobs.
 
-To use the debug scripts, create the configMap (from either indexmanagement-scripts-debug-onerror/ or indexmanagement-scripts-debug-always/) and then patch the cronjobs to use this configmap instead. For example:
+To use the debug scripts, create the configMap (from either `indexmanagement-scripts-debug-onerror/` or `indexmanagement-scripts-debug-always/` directory) and then patch the cronjobs to use this configmap instead. For example:
 
     oc create -n openshift-logging -f indexmanagement-scripts-debug-onerror.cm.yaml
     
