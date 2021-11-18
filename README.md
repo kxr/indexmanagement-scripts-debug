@@ -54,7 +54,7 @@ To use the debug scripts, create the configMap (from either `indexmanagement-scr
 
 ### Workaround with retries
 
-The configmap present in `indexmanagement-scripts-with-retries` directory has workaround implemented such that the script will try 3 times before failing. If you are interested you can try this workaround.
+The configmap present in `indexmanagement-scripts-with-retries` directory has workaround implemented such that the script will try 3 times before failing. If you are interested you can try this workaround. This script also records elasticsearch's health and node status at startup. Plus a random wait time is added in the beginning to avoid the three jobs hitting the elasticsearch cluster at the same time.
 
 
     oc create -n openshift-logging -f indexmanagement-scripts-with-retries.cm.yaml
