@@ -1,0 +1,46 @@
+
+set -uo pipefail
+
+# Number of retries
+retries=3
+
+
+# Cat the ES Health and Nodes to record load/health
+curl -s "$ES_SERVICE/_cat/health?v" \
+  --connect-timeout 30 \
+  --cacert /etc/indexmanagement/keys/admin-ca \
+  -H Content-Type:application/json \
+  -X GET \
+  -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+
+curl -s "$ES_SERVICE/_cat/nodes?v" \
+  --connect-timeout 30 \
+  --cacert /etc/indexmanagement/keys/admin-ca \
+  -H Content-Type:application/json \
+  -X GET \
+  -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+
+while [ "${retries}" -ge 1 ]; do
+
+    # Random sleep of 1 - 20s
+    sleep "$((1 + $RANDOM % 20))"
+
+    /tmp/scripts/delete
+    delete_rc=$?
+    
+    /tmp/scripts/rollover
+    rollover_rc=$?
+    
+    if [ "${delete_rc}" -eq 0 ] && [ "${rollover_rc}" -eq 0 ]; then
+        exit 0
+    fi
+
+    retries=$(( $retries - 1 ))
+
+    echo "######"
+    echo "One of the script failed (delete_rc=${delete_rc}, rollover_rc=${rollover_rc}, retries left: ${retries})"
+    echo "######"
+
+done
+
+exit 1

@@ -26,9 +26,8 @@ The operator deploys 3 cronJobs (running every 15 minutes) that uses these scrip
 
     {"error":{"root_cause":[{"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"}],"type":"security_exception","reason":"_opendistro_security_dls_query does not match (SG 900D)"},"status":500}
 
-### Debug Scripts
 
-These debug scripts are modified to log debugging information when the cronjob/scripts runs. The debug information can help identify the root cause of these random but recurring failing jobs.
+### This Repository
 
 **Disclaimer: Do not try this in Production. Author takes no reponsibility whatsoever**
 
@@ -39,6 +38,11 @@ Following is the description of files/directories present in this repository:
 - **indexmanagement-scripts-debug-always**: Debugging scripts with configMap. These scripts output debug information on every (successful or failed) run. 
 - **indexmanagement-scripts-debug-onerror**: Debugging scripts with configMap. These scripts will only output debug information if the job fails.
 - **im-debug-captures**: Some sample debug logs of failed jobs captured in a test cluster.
+- **indexmanagement-scripts-with-retries**: A workaround implemented such that the script tries 3 times before failing.
+
+### Debug Scripts
+
+These debug scripts are modified to log debugging information when the cronjob/scripts runs. The debug information can help identify the root cause of these random but recurring failing jobs.
 
 To use the debug scripts, create the configMap (from either indexmanagement-scripts-debug-onerror/ or indexmanagement-scripts-debug-always/) and then patch the cronjobs to use this configmap instead. For example:
 
@@ -48,4 +52,14 @@ To use the debug scripts, create the configMap (from either indexmanagement-scri
     oc patch -n openshift-logging cronjob/elasticsearch-im-infra -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-debug-onerror"}}]}}}}}}'
     oc patch -n openshift-logging cronjob/elasticsearch-im-audit -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-debug-onerror"}}]}}}}}}'
 
+### Workaround with retries
+
+The configmap present in indexmanagement-scripts-with-retries directory has workaround implemented such that the script will try 3 times before failing. If you are interested you can try this workaround.
+
+
+    oc create -n openshift-logging -f indexmanagement-scripts-with-retries.cm.yaml
+    
+    oc patch -n openshift-logging cronjob/elasticsearch-im-app -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-with-retries"}}]}}}}}}'
+    oc patch -n openshift-logging cronjob/elasticsearch-im-infra -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-with-retries"}}]}}}}}}'
+    oc patch -n openshift-logging cronjob/elasticsearch-im-audit -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-with-retries"}}]}}}}}}'
 
