@@ -42,9 +42,9 @@ Following is the description of files/directories present in this repository:
 
 ### Debug Scripts
 
-These debug scripts are modified to log debugging information when the cronjob/scripts runs. The debug information can help identify the root cause of these random but recurring failing jobs.
+These debug scripts are modified to log debugging information when the cronjob/scripts runs. The debug information can help identify the root cause of these random but recurring failing jobs. There are two debug modes "always" and "onerror". 
 
-To use the debug scripts, create the configMap (from either `indexmanagement-scripts-debug-onerror/` or `indexmanagement-scripts-debug-always/` directory) and then patch the cronjobs to use this configmap instead. For example:
+To use the debug scripts, create the configMap (from either [`indexmanagement-scripts-debug-onerror/`](https://github.com/kxr/indexmanagement-scripts-debug/tree/main/indexmanagement-scripts-debug-onerror) or [`indexmanagement-scripts-debug-always/`](https://github.com/kxr/indexmanagement-scripts-debug/blob/main/indexmanagement-scripts-debug-always/indexmanagement-scripts-debug-always.cm.yaml) directory) and then patch the cronjobs to use this configmap instead. For example:
 
     oc create -n openshift-logging -f indexmanagement-scripts-debug-onerror.cm.yaml
     
@@ -54,7 +54,8 @@ To use the debug scripts, create the configMap (from either `indexmanagement-scr
 
 ### Workaround with retries
 
-The configmap present in `indexmanagement-scripts-with-retries` directory has workaround implemented such that the script will try 3 times before failing. If you are interested you can try this workaround. This script also records elasticsearch's health and node status at startup. Plus a random wait time is added in the beginning to avoid the three jobs hitting the elasticsearch cluster at the same time.
+The [configmap](https://github.com/kxr/indexmanagement-scripts-debug/blob/main/indexmanagement-scripts-with-retries/indexmanagement-scripts-with-retries.cm.yaml) present in `indexmanagement-scripts-with-retries` directory has workaround implemented such that the script will try 3 times before failing. This script also records elasticsearch's health and node status at startup. Plus a random wait time is added in the beginning to avoid the three jobs hitting the elasticsearch cluster at the same time.
+The only script file changed in this case is the (delete-then-rollover)[https://github.com/kxr/indexmanagement-scripts-debug/blob/main/indexmanagement-scripts-with-retries/delete-then-rollover] entry-point script (to add the logic of retrying, adding the the random wait time and cating the es node/health status). All other scripts/files are untouched i.e, same as shipped with the operator. You can compare the [original](https://github.com/kxr/indexmanagement-scripts-debug/blob/main/indexmanagement-scripts-orig/delete-then-rollover) and the [retries](https://github.com/kxr/indexmanagement-scripts-debug/blob/main/indexmanagement-scripts-with-retries/delete-then-rollover) one to see how I have implemented this workaround.
 
 
     oc create -n openshift-logging -f indexmanagement-scripts-with-retries.cm.yaml
@@ -63,3 +64,12 @@ The configmap present in `indexmanagement-scripts-with-retries` directory has wo
     oc patch -n openshift-logging cronjob/elasticsearch-im-infra -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-with-retries"}}]}}}}}}'
     oc patch -n openshift-logging cronjob/elasticsearch-im-audit -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts-with-retries"}}]}}}}}}'
 
+### Reset To Factory Settings
+
+To go back to the factory/default settings, simply patch the cronjobs back to using the default configmap that came with the operator:
+
+    oc patch -n openshift-logging cronjob/elasticsearch-im-app -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts"}}]}}}}}}'
+    oc patch -n openshift-logging cronjob/elasticsearch-im-infra -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts"}}]}}}}}}'
+    oc patch -n openshift-logging cronjob/elasticsearch-im-audit -p '{"spec": {"jobTemplate": {"spec": {"template": {"spec": {"volumes": [{"name": "scripts", "configMap": {"name": "indexmanagement-scripts"}}]}}}}}}'
+
+And optionally delete any debug/workaround confimaps you created previously.
